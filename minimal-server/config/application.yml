@@ -1,7 +1,7 @@
 logging:
   level:
     root: WARN
-    be.vlaanderen.informatievlaanderen.ldes.server.Application: INFO
+    org.openldes.server.Application: INFO
 
 ldes-server:
   formatting:

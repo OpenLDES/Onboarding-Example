@@ -1,0 +1,201 @@
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix schema: <http://schema.org/> .
+@prefix datex: <http://vocab.datex.org/terms#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/parking/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+
+# Parking Facility Mapping
+<#ParkingFacilityMapping>
+  rml:logicalSource [
+    rml:source "bezetting-parkeergarages-real-time.csv" ;
+    rml:referenceFormulation ql:CSV
+  ] ;
+
+  rr:subjectMap [
+    rr:template "http://example.org/parking/{id}" ;
+    rr:class schema:ParkingFacility
+  ] ;
+
+  # Basic Properties
+  rr:predicateObjectMap [
+    rr:predicate schema:name ;
+    rr:objectMap [ rml:reference "name" ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:description ;
+    rr:objectMap [ rml:reference "description" ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:identifier ;
+    rr:objectMap [ rml:reference "id" ]
+  ] ;
+
+  # Capacity Information
+  rr:predicateObjectMap [
+    rr:predicate datex:totalCapacity ;
+    rr:objectMap [ 
+      rml:reference "totalcapacity" ;
+      rr:datatype xsd:integer
+    ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate datex:availableCapacity ;
+    rr:objectMap [ 
+      rml:reference "availablecapacity" ;
+      rr:datatype xsd:integer
+    ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate datex:occupancy ;
+    rr:objectMap [ 
+      rml:reference "occupation" ;
+      rr:datatype xsd:integer
+    ]
+  ] ;
+
+  # Temporal Information
+  rr:predicateObjectMap [
+    rr:predicate dct:modified ;
+    rr:objectMap [ 
+      rml:reference "lastupdate" ;
+      rr:datatype xsd:dateTime
+    ]
+  ] ;
+
+  # Type/Category
+  rr:predicateObjectMap [
+    rr:predicate datex:parkingType ;
+    rr:objectMap [ rml:reference "type" ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:category ;
+    rr:objectMap [ rml:reference "categorie" ]
+  ] ;
+
+  # Operational Status
+  rr:predicateObjectMap [
+    rr:predicate schema:openingHours ;
+    rr:objectMap [ rml:reference "openingtimesdescription" ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate datex:isOpenNow ;
+    rr:objectMap [ 
+      rml:reference "isopennow" ;
+      rr:datatype xsd:boolean
+    ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate datex:temporarilyClosed ;
+    rr:objectMap [ 
+      rml:reference "temporaryclosed" ;
+      rr:datatype xsd:boolean
+    ]
+  ] ;
+
+  # Operator & Pricing
+  rr:predicateObjectMap [
+    rr:predicate schema:provider ;
+    rr:objectMap [ rml:reference "operatorinformation" ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate datex:freeParking ;
+    rr:objectMap [ 
+      rml:reference "freeparking" ;
+      rr:datatype xsd:boolean
+    ]
+  ] ;
+
+  # URLs
+  rr:predicateObjectMap [
+    rr:predicate schema:url ;
+    rr:objectMap [ 
+      rml:reference "urllinkaddress" ;
+      rr:termType rr:IRI
+    ]
+  ] ;
+
+  # Occupancy Trend
+  rr:predicateObjectMap [
+    rr:predicate datex:occupancyTrend ;
+    rr:objectMap [ rml:reference "occupancytrend" ]
+  ] ;
+
+  # Dashboard Visibility
+  rr:predicateObjectMap [
+    rr:predicate ex:visibleOnDashboard ;
+    rr:objectMap [ 
+      rml:reference "dashboard" ;
+      rr:datatype xsd:boolean
+    ]
+  ] ;
+
+  # Additional Text/Notes
+  rr:predicateObjectMap [
+    rr:predicate schema:additionalProperty ;
+    rr:objectMap [ rml:reference "text" ]
+  ] ;
+
+  # Location and dimension data (as JSON string)
+  rr:predicateObjectMap [
+    rr:predicate ex:locationDetails ;
+    rr:objectMap [ rml:reference "locationanddimension" ]
+  ] .
+
+# Geographic Location Mapping
+<#LocationMapping>
+  rml:logicalSource [
+    rml:source "bezetting-parkeergarages-real-time.csv" ;
+    rml:referenceFormulation ql:CSV
+  ] ;
+
+  rr:subjectMap [
+    rr:template "http://example.org/parking/{id}/location" ;
+    rr:class schema:GeoCoordinates
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:latitude ;
+    rr:objectMap [ 
+      rml:reference "location" ;
+      rr:datatype xsd:string
+    ]
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:longitude ;
+    rr:objectMap [ 
+      rml:reference "location" ;
+      rr:datatype xsd:string
+    ]
+  ] .
+
+# Link Parking to Location
+<#ParkingToLocationMapping>
+  rml:logicalSource [
+    rml:source "bezetting-parkeergarages-real-time.csv" ;
+    rml:referenceFormulation ql:CSV
+  ] ;
+
+  rr:subjectMap [
+    rr:template "http://example.org/parking/{id}" ;
+    rr:class schema:ParkingFacility
+  ] ;
+
+  rr:predicateObjectMap [
+    rr:predicate schema:geo ;
+    rr:objectMap [
+      rr:parentTriplesMap <#LocationMapping>
+    ]
+  ] .

@@ -1,5 +1,5 @@
 # Setting Up a Minimal LDES Client
-> **UPDATED** this tutorial has been changed to define the publish pipeline dynamically and to add a (test) sink system. You can find the previous version [here](https://github.com/Informatievlaanderen/VSDS-Onboarding-Example/tree/v1.0.0/minimal-client).
+> **UPDATED** this tutorial has been changed to define the publish pipeline dynamically and to add a (test) sink system. You can find the previous version [here](https://github.com/OpenLDES/Onboarding-Example/tree/v1.0.0/minimal-client).
 
 This tutorial will show you how to setup a minimal LDES CLient in order to replicate and synchronize an existing Linked Data Event Stream (LDES).
 
@@ -20,7 +20,7 @@ OK, so we have a LDES URL (e.g. `http://localhost:9003/ldes/occupancy`) and we h
 
 Lucky for you we have already done the hard part of creating a LDES Client, which is a freely available component that allows us to, given a LDES or a view, request the view node or any linked node, extract each member from the node and follow the links in each node in order to collect all members and in fact _replicate_ the LDES. In addition, the LDES Client will also look at the node properties which are lokated in the HTTP headers and re-request the nodes that can change over time, both nodes structure and nodes containing members. By doing this we can _synchronize_ the LDES.
 
-The LDES CLient component is packaged as a [LDIO input component](https://github.com/Informatievlaanderen/VSDS-Linked-Data-Interactions/tree/main/ldi-orchestrator/ldio-connectors/ldio-ldes-client) (as well as a [NiFi processor](https://github.com/Informatievlaanderen/VSDS-Linked-Data-Interactions/tree/main/ldi-nifi/ldi-nifi-processors/ldes-client-processor)). The LDIO components are packaged as a docker image ([LDIO workbench](https://hub.docker.com/r/ldes/ldi-orchestrator). These components act as the initial part of a data pipeline and need a sink component which receives the extracted collection members which as you already know are version objects. But if you do not need the history of state changes you need a way to revert these version objects back to their corresponding state object. This process of converting such a _version object_ back to a _state object_ we call _version materialization_. The LDES Client can do that if you configure it to [output state objects](https://informatievlaanderen.github.io/VSDS-Linked-Data-Interactions/ldio/ldio-inputs/ldio-ldes-client#version-materialisation-properties).
+The LDES CLient component is packaged as a [LDIO input component](https://github.com/OpenLDES/Linked-Data-Interactions/tree/main/ldi-orchestrator/ldio-connectors/ldio-ldes-client) (as well as a [NiFi processor](https://github.com/OpenLDES/Linked-Data-Interactions/tree/main/ldi-nifi/ldi-nifi-processors/ldes-client-processor)). The LDIO components are packaged as a docker image ([LDIO workbench](https://hub.docker.com/r/openldes/ldi-orchestrator). These components act as the initial part of a data pipeline and need a sink component which receives the extracted collection members which as you already know are version objects. But if you do not need the history of state changes you need a way to revert these version objects back to their corresponding state object. This process of converting such a _version object_ back to a _state object_ we call _version materialization_. The LDES Client can do that if you configure it to [output state objects](https://openldes.github.io/Linked-Data-Interactions/ldio/ldio-inputs/ldio-ldes-client#version-materialisation-properties).
 
 No doubt you are thinking by now: 'yeah, yeah, enough with that, just show me how!' OK then, if you insist...
 
@@ -34,7 +34,7 @@ chmod +x ./run-ldes-server.sh
 ```
 Done? Let's continue then.
 
-Now what do we need for our minimal LDES Client example? Really not that much! We obviouly need a workbench (e.g. LDIO) containing one pipeline which starts with a [LDES Client component](https://informatievlaanderen.github.io/VSDS-Linked-Data-Interactions/ldio/ldio-inputs/ldio-ldes-client) and outputs the members to a sink. For the sink we can use a [test message sink](https://github.com/Informatievlaanderen/VSDS-LDES-E2E-message-sink)). You can use any sink for which we have an [output component](https://informatievlaanderen.github.io/VSDS-Linked-Data-Interactions/ldio/ldio-outputs/index). We will be using the HTTP protocol in this tutorial so we can use a [HTTP output component](https://informatievlaanderen.github.io/VSDS-Linked-Data-Interactions/ldio/ldio-outputs/ldio-http-out) to output members to our sink.
+Now what do we need for our minimal LDES Client example? Really not that much! We obviouly need a workbench (e.g. LDIO) containing one pipeline which starts with a [LDES Client component](https://openldes.github.io/Linked-Data-Interactions/ldio/ldio-inputs/ldio-ldes-client) and outputs the members to a sink. For the sink we can use a [test message sink](https://github.com/OpenLDES/LDES-E2E-message-sink)). You can use any sink for which we have an [output component](https://openldes.github.io/Linked-Data-Interactions/ldio/ldio-outputs/index). We will be using the HTTP protocol in this tutorial so we can use a [HTTP output component](https://openldes.github.io/Linked-Data-Interactions/ldio/ldio-outputs/ldio-http-out) to output members to our sink.
 
 So, the input part of our pipeline will look something like this:
 ```yaml
@@ -72,14 +72,14 @@ outputs:
 The [docker compose](./docker-compose.yml) file isn't all that scary either. We just need a workbench service which looks like this:
 ```yaml
 ldio-workbench:
-  image: ldes/ldi-orchestrator:2.12.0
+  image: openldes/ldi-orchetstrator:latest
   network_mode: "host"
   environment:
     - SERVER_PORT=9006
   healthcheck:
     test: ["CMD", "wget", "-qO-", "http://localhost:9006/actuator/health"]
 ```
-We use a recent [LDIO image](https://hub.docker.com/r/ldes/ldi-orchestrator/tags) from docker hub. We define an environment variable for the LDIO Workbench server port and a health check which allows us to wait that the workbench to be fully initialized and ready to accept pipelines.
+We use a recent [LDIO image](https://hub.docker.com/r/openldes/ldi-orchestrator/tags) from docker hub. We define an environment variable for the LDIO Workbench server port and a health check which allows us to wait that the workbench to be fully initialized and ready to accept pipelines.
 
 Hmmm, what is that line `network_mode: "host"` all about? Well, as stated before, the links in the LDES nodes will be absolute URLs as defined by the LDES Server configuration which in this case is `http://localhost:9003/ldes`. Because we have exposed the LDES Server to the host system (basically your system) you can request the LDES view and all the nodes from your (host) system just fine. However, the `localhost` is a special name which always resolves to IP address 127.0.0.1 as it maps the the loopback adapter of your network card. Essentially, if using its own network, when the LDES Client tries to request a LDES node located on `localhost` it will get back it's loopback address 127.0.0.1 instead of the IP address of the LDES Server. So, the trick we use here is to let the workbench containing our LDES Client share the network of your system (the host) allowing it to resolve to the host network stack and then because of the docker port mapping, your docker will do its magic and forward the HTTP request to the LDES Server container. This is a bit of hocus-pocus that we need in this tutorial because we run our LDES Server locally and do not expose it using a domain name. In real-life you will not have to do this. In fact, if you would use a LDES which is hosted on the web in this tutorial you could comment out or remove the line.
 

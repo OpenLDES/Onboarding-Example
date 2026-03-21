@@ -1,0 +1,9 @@
+version: '3.3'
+services:
+  ldio-workbench:
+    container_name: ldio-workbench
+    image: openldes/ldi-orchestrator:latest
+    volumes:
+      - ./ldio.config.yml:/ldio/application.yml:ro
+    ports:
+      - "8080:8080"

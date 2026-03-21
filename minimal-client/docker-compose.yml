@@ -5,7 +5,7 @@ networks:
 services:
 
   ldio-workbench:
-    image: ldes/ldi-orchestrator:2.12.0
+    image: openldes/ldi-orchetstrator:latest
     network_mode: "host"
     environment:
       - SERVER_PORT=9006

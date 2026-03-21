@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked Open Data · Map Viewer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #13161e;
+    --border: #232735;
+    --accent: #5dffb5;
+    --accent2: #7b8cff;
+    --text: #e2e8f0;
+    --muted: #6b7280;
+    --danger: #ff6b6b;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    grid-template-columns: 400px 1fr;
+    overflow: hidden;
+  }
+
+  header {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+  }
+
+  header .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  header .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  header .stats {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  header .stats span strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .input-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 220px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 12px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus { border-color: var(--accent2); }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    padding: 9px 16px;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f14;
+    flex: 1;
+  }
+  .btn-primary:hover { background: #3dffa3; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--border);
+    color: var(--muted);
+  }
+  .btn-secondary:hover { background: #2d3145; color: var(--text); }
+
+  .error-box {
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 11px;
+    color: var(--danger);
+    display: none;
+  }
+
+  .results-section {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .results-section::-webkit-scrollbar { width: 4px; }
+  .results-section::-webkit-scrollbar-track { background: transparent; }
+  .results-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--muted);
+    text-align: center;
+    gap: 8px;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .empty-icon { font-size: 32px; margin-bottom: 4px; }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .card:hover, .card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(93,255,181,0.15);
+  }
+
+  .card.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  .card-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .card-meta {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .card-meta .coord { color: var(--accent2); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: rgba(93,255,181,0.1);
+    color: var(--accent);
+    float: right;
+  }
+
+  .badge.low { background: rgba(255,107,107,0.1); color: var(--danger); }
+  .badge.mid { background: rgba(255,184,0,0.1); color: #ffb800; }
+
+  #map {
+    z-index: 1;
+  }
+
+  /* Leaflet popup styling */
+  .leaflet-popup-content-wrapper {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .leaflet-popup-tip {
+    background: var(--panel);
+  }
+
+  .leaflet-popup-content {
+    margin: 0;
+    min-width: 200px;
+  }
+
+  .popup-inner {
+    padding: 14px 16px;
+  }
+
+  .popup-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .popup-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .popup-row:last-child { border-bottom: none; }
+  .popup-row .key { color: var(--muted); }
+  .popup-row .val { color: var(--text); text-align: right; }
+
+  .leaflet-control-zoom a {
+    background: var(--panel) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  .leaflet-control-zoom a:hover {
+    background: var(--border) !important;
+  }
+
+  .file-drop-zone {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .file-drop-zone:hover { border-color: var(--accent2); color: var(--text); }
+  .file-drop-zone input { display: none; }
+
+  .url-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .url-row input[type="url"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+  }
+
+  .url-row input[type="url"]:focus { border-color: var(--accent2); }
+  .url-row input[type="url"]::placeholder { color: var(--muted); }
+
+  .btn-fetch {
+    background: var(--accent2);
+    color: #fff;
+    white-space: nowrap;
+    padding: 9px 14px;
+  }
+  .btn-fetch:hover { background: #6a7bff; transform: translateY(-1px); }
+  .btn-fetch:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* LDES toggle */
+  .ldes-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .ldes-toggle input { display: none; }
+  .toggle-track {
+    width: 30px; height: 16px;
+    background: var(--border);
+    border-radius: 8px;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .ldes-toggle input:checked ~ .toggle-track { background: rgba(93,255,181,0.3); }
+  .ldes-toggle input:checked ~ .toggle-track .toggle-thumb { transform: translateX(14px); background: var(--accent); }
+  .ldes-toggle input:checked ~ .toggle-label { color: var(--accent); }
+  .toggle-label code { font-family: 'DM Mono', monospace; color: inherit; }
+
+  /* Progress */
+  .progress-box {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .progress-box.visible { display: flex; }
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-bar.indeterminate {
+    width: 40%;
+    animation: indeterminate 1.2s ease-in-out infinite;
+  }
+  @keyframes indeterminate {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+  .progress-text {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card { animation: fadeIn 0.2s ease both; }
+
+  /* History panel */
+  #history-panel {
+    position: fixed;
+    bottom: 0; right: 0;
+    width: 420px;
+    max-height: 55vh;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    border-radius: 12px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px -4px 24px rgba(0,0,0,0.4);
+  }
+  #history-panel.open { transform: translateY(0); }
+
+  #history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #history-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    color: var(--accent);
+  }
+  #history-close {
+    background: var(--border);
+    color: var(--muted);
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    padding: 0;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #history-close:hover { background: var(--danger); color: #fff; }
+
+  #history-chart-wrap {
+    padding: 12px 16px 0;
+    flex-shrink: 0;
+    height: 140px;
+  }
+  #history-chart { width: 100% !important; height: 100% !important; }
+
+  #history-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #history-list::-webkit-scrollbar { width: 4px; }
+  #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .history-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .history-row .h-time { color: var(--muted); }
+  .history-row .h-cap  { color: var(--text); text-align: right; }
+  .history-row .h-pct  {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 52px;
+    text-align: center;
+  }
+  .h-pct.low  { background: rgba(93,255,181,0.1);  color: var(--accent); }
+  .h-pct.mid  { background: rgba(255,184,0,0.1);   color: #ffb800; }
+  .h-pct.high { background: rgba(255,107,107,0.1); color: var(--danger); }
+  .h-pct.none { background: var(--border); color: var(--muted); }
+
+  .card.has-history { cursor: pointer; }
+  .card.has-history .card-name::after {
+    content: ' 🕐';
+    font-size: 10px;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">LOD Map Viewer</div>
+    <div class="subtitle">Linked Open Data · RDF / Turtle</div>
+  </div>
+  <div class="stats">
+    <span>Locations: <strong id="stat-count">0</strong></span>
+    <span>Prefixes: <strong id="stat-prefixes">0</strong></span>
+  </div>
+</header>
+
+<aside class="sidebar">
+  <div class="input-section">
+    <div class="section-label">Fetch from URL</div>
+    <div class="url-row">
+      <input type="url" id="url-input" value="http://localhost:9001/ldes/occupancy/by-location" />
+      <button class="btn-fetch" id="fetch-btn" onclick="fetchFromUrl()">Fetch</button>
+    </div>
+    <label class="ldes-toggle">
+      <input type="checkbox" id="ldes-mode" checked="true" />
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-label">LDES stream — follow all <code>tree:relation</code> pages</span>
+    </label>
+    <div class="progress-box" id="progress-box">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="progress-text" id="progress-text">Fetching…</div>
+    </div>
+    <div class="section-label" style="margin-top:10px">Turtle / RDF Input</div>
+    <textarea id="turtle-input" placeholder="Paste your Turtle / RDF data here...
+
+@prefix wgs84_pos: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+..."></textarea>
+    <label class="file-drop-zone">
+      📂 Drop a .ttl / .rdf file or click to upload
+      <input type="file" id="file-input" accept=".ttl,.rdf,.n3,.txt">
+    </label>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="parse()" id="parse-btn">▶ Parse & Map</button>
+      <button class="btn-secondary" onclick="loadExample()">Load Example</button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <div class="error-box" id="error-box"></div>
+  </div>
+
+  <div class="results-section" id="results">
+    <div class="empty-state">
+      <div class="empty-icon">🗺️</div>
+      <div>Paste Turtle data and click<br><strong>Parse &amp; Map</strong></div>
+    </div>
+  </div>
+</aside>
+
+<div id="map"></div>
+
+<!-- History panel -->
+<div id="history-panel">
+  <div id="history-header">
+    <div id="history-title">History</div>
+    <button id="history-close" onclick="closeHistory()">✕</button>
+  </div>
+  <div id="history-chart-wrap">
+    <canvas id="history-chart"></canvas>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/n3@1.17.2/browser/n3.min.js"></script>
+<script>
+// ── Map setup ────────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true }).setView([51.05, 3.72], 13);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+const markerGroup = L.layerGroup().addTo(map);
+
+// Custom marker
+function makeIcon(color = '#5dffb5') {
+  return L.divIcon({
+    className: '',
+    html: `<svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 0C6.27 0 0 6.27 0 14c0 9.75 14 22 14 22S28 23.75 28 14C28 6.27 21.73 0 14 0z" fill="${color}" fill-opacity="0.9"/>
+      <circle cx="14" cy="14" r="5" fill="#0d0f14"/>
+    </svg>`,
+    iconSize: [28, 36],
+    iconAnchor: [14, 36],
+    popupAnchor: [0, -36]
+  });
+}
+
+// ── Turtle Parser using N3.js ─────────────────────────────────────────────────
+const WGS_LAT   = 'http://www.w3.org/2003/01/geo/wgs84_pos#lat';
+const WGS_LON   = 'http://www.w3.org/2003/01/geo/wgs84_pos#long';
+const WGS_LON2  = 'http://www.w3.org/2003/01/geo/wgs84_pos#lon';
+const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
+const RDF_TYPE  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+const MV_CAP    = 'http://schema.mobivoc.org/#capacity';
+const MV_TOTAL  = 'http://schema.mobivoc.org/#totalCapacity';
+const MV_CUR    = 'http://schema.mobivoc.org/#currentValue';
+const DCT_MOD         = 'http://purl.org/dc/terms/modified';
+const DCT_IS_VERSION  = 'http://purl.org/dc/terms/isVersionOf';
+const GEO_WKT   = 'http://www.opengis.net/ont/geosparql#asWKT';
+const LOCN_GEO  = 'http://www.w3.org/ns/locn#geometry';
+
+// ── RDF helpers (module-level so LDES crawler can reuse them) ────────────────
+function litVal(term) {
+  if (!term) return null;
+  if (N3.Util.isLiteral(term)) return term.value;
+  return null;
+}
+
+function numVal(term) {
+  const v = litVal(term);
+  return v !== null ? parseFloat(v) : null;
+}
+
+function objVal(store, subj, pred) {
+  const quads = store.getQuads(subj, pred, null, null);
+  return quads.length ? quads[0].object : null;
+}
+
+function allObjs(store, subj, pred) {
+  return store.getQuads(subj, pred, null, null).map(q => q.object);
+}
+
+// Extract coordinate + metadata snapshot from a single versioned subject
+function extractSnapshot(store, subjectURI) {
+  const subj = N3.DataFactory.namedNode(subjectURI);
+
+  let lat = numVal(objVal(store, subj, WGS_LAT));
+  let lon = numVal(objVal(store, subj, WGS_LON)) ?? numVal(objVal(store, subj, WGS_LON2));
+
+  if (lat === null || lon === null) {
+    for (const geomNode of allObjs(store, subj, LOCN_GEO)) {
+      const wkt = litVal(objVal(store, geomNode, GEO_WKT));
+      if (wkt) {
+        const m = wkt.match(/POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)/i);
+        if (m) {
+          const a = parseFloat(m[1]), b = parseFloat(m[2]);
+          if (Math.abs(a) <= 90 && Math.abs(b) <= 180)      { lat = a; lon = b; }
+          else if (Math.abs(b) <= 90 && Math.abs(a) <= 180) { lat = b; lon = a; }
+        }
+      }
+    }
+  }
+  if (lat === null || lon === null) {
+    store.getQuads(subj, null, null, null).forEach(q => {
+      if (lat !== null && lon !== null) return;
+      if (N3.Util.isBlankNode(q.object)) {
+        const wkt = litVal(objVal(store, q.object, GEO_WKT));
+        if (wkt) {
+          const m = wkt.match(/POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)/i);
+          if (m) {
+            const a = parseFloat(m[1]), b = parseFloat(m[2]);
+            if (Math.abs(a) <= 90 && Math.abs(b) <= 180)      { lat = a; lon = b; }
+            else if (Math.abs(b) <= 90 && Math.abs(a) <= 180) { lat = b; lon = a; }
+          }
+        }
+      }
+    });
+  }
+
+  if (lat === null || lon === null || isNaN(lat) || isNaN(lon)) return null;
+
+  const label = litVal(objVal(store, subj, RDFS_LABEL))
+    || subjectURI.split('/').pop().split('#')[0]
+    || subjectURI;
+
+  const snap = { uri: subjectURI, label, lat, lon };
+  snap.modified = litVal(objVal(store, subj, DCT_MOD));
+  snap.isVersionOf = litVal(objVal(store, subj, DCT_IS_VERSION)) ||
+    (N3.Util.isNamedNode(objVal(store, subj, DCT_IS_VERSION))
+      ? objVal(store, subj, DCT_IS_VERSION).value : null);
+
+  for (const capNode of allObjs(store, subj, MV_CAP)) {
+    const total   = numVal(objVal(store, capNode, MV_TOTAL));
+    const current = numVal(objVal(store, capNode, MV_CUR));
+    if (total   !== null) snap.totalCapacity   = total;
+    if (current !== null) snap.currentCapacity = current;
+  }
+  if (snap.totalCapacity && snap.currentCapacity !== undefined) {
+    snap.occupancyPct = Math.round(
+      ((snap.totalCapacity - snap.currentCapacity) / snap.totalCapacity) * 100
+    );
+  }
+  snap.types = allObjs(store, subj, RDF_TYPE)
+    .filter(t => N3.Util.isNamedNode(t))
+    .map(t => t.value.split('#').pop().split('/').pop())
+    .filter(Boolean);
+
+  return snap;
+}
+
+// Extract all locations from store, grouping versions by their canonical URI
+function extractLocationsFromStore(store) {
+  const subjects = new Set();
+  store.getQuads(null, null, null, null).forEach(q => {
+    if (N3.Util.isNamedNode(q.subject)) subjects.add(q.subject.value);
+  });
+
+  // canonicalId → { latest snapshot + all history snapshots }
+  const byCanonical = new Map();
+
+  for (const subjectURI of subjects) {
+    const snap = extractSnapshot(store, subjectURI);
+    if (!snap) continue;
+
+    // Canonical ID: prefer isVersionOf, fall back to the URI itself (strip #timestamp)
+    const canonicalId = snap.isVersionOf || subjectURI.replace(/#.*$/, '');
+
+    if (!byCanonical.has(canonicalId)) {
+      byCanonical.set(canonicalId, { canonicalId, snapshots: [] });
+    }
+    byCanonical.get(canonicalId).snapshots.push(snap);
+  }
+
+  // For each canonical location: sort snapshots newest-first, expose latest as top-level fields
+  const locations = [];
+  for (const [canonicalId, entry] of byCanonical) {
+    entry.snapshots.sort((a, b) => (b.modified || '') > (a.modified || '') ? 1 : -1);
+    const latest = entry.snapshots[0];
+    locations.push({ ...latest, canonicalId, history: entry.snapshots });
+  }
+
+  return locations;
+}
+
+function parseTurtle(text, baseIRI) {
+  return new Promise((resolve, reject) => {
+    const opts = baseIRI ? { baseIRI } : {};
+    const parser = new N3.Parser(opts);
+    const store  = new N3.Store();
+    parser.parse(text, (error, quad, prefixes) => {
+      if (error) { reject(error); return; }
+      if (quad)  { store.addQuad(quad); return; }
+      const prefixCount = Object.keys(prefixes || {}).length;
+      resolve({ store, prefixCount });
+    });
+  });
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+let markers = [];
+
+function occupancyColor(pct) {
+  if (pct === undefined) return '#7b8cff';
+  if (pct < 50) return '#5dffb5';
+  if (pct < 80) return '#ffb800';
+  return '#ff6b6b';
+}
+
+async function parse() {
+  const text = document.getElementById('turtle-input').value.trim();
+  if (!text) { showError('Please paste some Turtle / RDF data first.'); return; }
+  hideError();
+
+  let store, prefixCount;
+  try {
+    ({ store, prefixCount } = await parseTurtle(text));
+  } catch(e) {
+    showError('Parse error: ' + e.message);
+    return;
+  }
+
+  renderLocations(extractLocationsFromStore(store), prefixCount);
+}
+
+// ── History panel ─────────────────────────────────────────────────────────────
+let historyChart = null;
+
+function openHistory(loc) {
+  const panel = document.getElementById('history-panel');
+  const history = loc.history || [loc];
+
+  document.getElementById('history-title').textContent = `${loc.label} — ${history.length} snapshot${history.length > 1 ? 's' : ''}`;
+
+  // Chart
+  const ctx = document.getElementById('history-chart').getContext('2d');
+  if (historyChart) historyChart.destroy();
+
+  // Oldest-first for the chart
+  const chronological = [...history].reverse();
+  const hasOccupancy = chronological.some(s => s.occupancyPct !== undefined);
+  const hasCapacity  = chronological.some(s => s.currentCapacity !== undefined);
+
+  if (hasOccupancy || hasCapacity) {
+    const labels = chronological.map(s => s.modified ? new Date(s.modified).toLocaleString() : '?');
+    const datasets = [];
+    if (hasOccupancy) {
+      datasets.push({
+        label: 'Occupancy %',
+        data: chronological.map(s => s.occupancyPct ?? null),
+        borderColor: '#5dffb5',
+        backgroundColor: 'rgba(93,255,181,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#5dffb5',
+        yAxisID: 'y',
+      });
+    }
+    if (hasCapacity) {
+      datasets.push({
+        label: 'Available spaces',
+        data: chronological.map(s => s.currentCapacity ?? null),
+        borderColor: '#7b8cff',
+        backgroundColor: 'rgba(123,140,255,0.08)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: '#7b8cff',
+        yAxisID: hasOccupancy ? 'y2' : 'y',
+      });
+    }
+
+    historyChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#6b7280', font: { family: 'DM Mono', size: 10 }, boxWidth: 12 } }
+        },
+        scales: {
+          x: { ticks: { color: '#6b7280', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 6 }, grid: { color: '#232735' } },
+          y: { ticks: { color: '#5dffb5', font: { family: 'DM Mono', size: 9 } }, grid: { color: '#232735' }, position: 'left' },
+          ...(hasOccupancy && hasCapacity ? {
+            y2: { ticks: { color: '#7b8cff', font: { family: 'DM Mono', size: 9 } }, grid: { display: false }, position: 'right' }
+          } : {})
+        }
+      }
+    });
+    document.getElementById('history-chart-wrap').style.display = '';
+  } else {
+    document.getElementById('history-chart-wrap').style.display = 'none';
+  }
+
+  // List rows
+  const list = document.getElementById('history-list');
+  list.innerHTML = history.map(snap => {
+    const time = snap.modified ? new Date(snap.modified).toLocaleString() : '—';
+    const capStr = snap.totalCapacity
+      ? `${snap.currentCapacity ?? '?'} / ${snap.totalCapacity}`
+      : '—';
+    let pctClass = 'none', pctLabel = '—';
+    if (snap.occupancyPct !== undefined) {
+      pctLabel = snap.occupancyPct + '%';
+      pctClass = snap.occupancyPct < 50 ? 'low' : snap.occupancyPct < 80 ? 'mid' : 'high';
+    }
+    return `<div class="history-row">
+      <span class="h-time">${escHtml(time)}</span>
+      <span class="h-cap">${escHtml(capStr)}</span>
+      <span class="h-pct ${pctClass}">${pctLabel}</span>
+    </div>`;
+  }).join('');
+
+  panel.classList.add('open');
+}
+
+function closeHistory() {
+  document.getElementById('history-panel').classList.remove('open');
+}
+
+function renderLocations(locations, prefixCount) {
+  markerGroup.clearLayers();
+  markers = [];
+  closeHistory();
+
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
+
+  if (locations.length === 0) {
+    showError('No coordinate data found. Make sure your Turtle uses wgs84_pos:lat / wgs84_pos:long or GeoSPARQL WKT literals.');
+    resultsEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div>No locations found</div></div>`;
+    return;
+  }
+
+  document.getElementById('stat-count').textContent = locations.length;
+  document.getElementById('stat-prefixes').textContent = prefixCount;
+
+  const bounds = [];
+
+  locations.forEach((loc, idx) => {
+    const color = occupancyColor(loc.occupancyPct);
+    const marker = L.marker([loc.lat, loc.lon], { icon: makeIcon(color) });
+    const hasHistory = loc.history && loc.history.length > 1;
+
+    const rows = [['Coordinates', `${loc.lat.toFixed(6)}, ${loc.lon.toFixed(6)}`]];
+    if (loc.types.length) rows.push(['Type', loc.types.join(', ')]);
+    if (loc.totalCapacity) rows.push(['Total capacity', loc.totalCapacity]);
+    if (loc.currentCapacity !== undefined) rows.push(['Available', loc.currentCapacity]);
+    if (loc.occupancyPct !== undefined) rows.push(['Occupancy', `${loc.occupancyPct}%`]);
+    if (loc.modified) rows.push(['Last updated', new Date(loc.modified).toLocaleString()]);
+    if (hasHistory) rows.push(['Snapshots', loc.history.length + ' versions']);
+
+    const popupHTML = `<div class="popup-inner">
+      <div class="popup-title">${escHtml(loc.label)}</div>
+      ${rows.map(([k,v]) => `<div class="popup-row"><span class="key">${k}</span><span class="val">${escHtml(String(v))}</span></div>`).join('')}
+      ${hasHistory ? `<div style="margin-top:10px"><button onclick="openHistory(window._locs[${idx}])" style="width:100%;background:rgba(93,255,181,0.1);color:var(--accent);border:1px solid rgba(93,255,181,0.3);border-radius:6px;padding:6px;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;">📈 Show history (${loc.history.length} snapshots)</button></div>` : ''}
+    </div>`;
+
+    marker.bindPopup(popupHTML, { maxWidth: 280 });
+    markerGroup.addLayer(marker);
+    markers.push(marker);
+    bounds.push([loc.lat, loc.lon]);
+
+    const card = document.createElement('div');
+    card.className = 'card' + (hasHistory ? ' has-history' : '');
+    card.style.animationDelay = `${idx * 40}ms`;
+
+    let badge = '';
+    if (loc.occupancyPct !== undefined) {
+      const cls = loc.occupancyPct < 50 ? '' : loc.occupancyPct < 80 ? 'mid' : 'low';
+      badge = `<span class="badge ${cls}">${loc.occupancyPct}% full</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-name">${badge}${escHtml(loc.label)}</div>
+      <div class="card-meta">
+        <div class="coord">📍 ${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)}</div>
+        ${loc.types.length ? `<div>${loc.types.join(', ')}</div>` : ''}
+        ${loc.totalCapacity ? `<div>Capacity: ${loc.currentCapacity ?? '?'} / ${loc.totalCapacity}</div>` : ''}
+        ${hasHistory ? `<div style="color:var(--accent2);margin-top:3px">🕐 ${loc.history.length} snapshots — click to view history</div>` : ''}
+      </div>`;
+
+    const openForLoc = () => openHistory(loc);
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      map.setView([loc.lat, loc.lon], 16, { animate: true });
+      marker.openPopup();
+      if (hasHistory) openHistory(loc);
+    });
+
+    marker.on('click', () => {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (hasHistory) openHistory(loc);
+    });
+
+    resultsEl.appendChild(card);
+  });
+
+  // Expose locations globally for popup button access
+  window._locs = locations;
+
+  if (bounds.length === 1) {
+    map.setView(bounds[0], 15);
+  } else if (bounds.length > 1) {
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearAll() {
+  document.getElementById('turtle-input').value = '';
+  document.getElementById('results').innerHTML = `<div class="empty-state"><div class="empty-icon">🗺️</div><div>Paste Turtle data and click<br><strong>Parse &amp; Map</strong></div></div>`;
+  markerGroup.clearLayers();
+  document.getElementById('stat-count').textContent = '0';
+  document.getElementById('stat-prefixes').textContent = '0';
+  hideError();
+  enableDisableParseButton(true);
+}
+
+const EXAMPLE = `PREFIX mv:            <http://schema.mobivoc.org/#>
+PREFIX rdfs:          <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wgs84_pos:     <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX xsd:           <http://www.w3.org/2001/XMLSchema#>
+PREFIX terms:         <http://purl.org/dc/terms/>
+PREFIX rdf:           <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX parkings-gent: <https://stad.gent/nl/mobiliteit-openbare-werken/parkeren/parkings-gent/>
+
+# Getouw — 4 versions across the day
+<https://stad.gent/.../parking-het-getouw#2026-02-25T08:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Getouw" ;
+        terms:isVersionOf   parkings-gent:parking-het-getouw ;
+        terms:modified      "2026-02-25T08:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 350 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 340 ] ;
+        wgs84_pos:lat       51.072569883800206 ;
+        wgs84_pos:long      3.7148313576713052 .
+
+<https://stad.gent/.../parking-het-getouw#2026-02-25T10:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Getouw" ;
+        terms:isVersionOf   parkings-gent:parking-het-getouw ;
+        terms:modified      "2026-02-25T10:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 350 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 280 ] ;
+        wgs84_pos:lat       51.072569883800206 ;
+        wgs84_pos:long      3.7148313576713052 .
+
+<https://stad.gent/.../parking-het-getouw#2026-02-25T12:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Getouw" ;
+        terms:isVersionOf   parkings-gent:parking-het-getouw ;
+        terms:modified      "2026-02-25T12:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 350 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 95 ] ;
+        wgs84_pos:lat       51.072569883800206 ;
+        wgs84_pos:long      3.7148313576713052 .
+
+<https://stad.gent/.../parking-het-getouw#2026-02-25T15:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Getouw" ;
+        terms:isVersionOf   parkings-gent:parking-het-getouw ;
+        terms:modified      "2026-02-25T15:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 350 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 312 ] ;
+        wgs84_pos:lat       51.072569883800206 ;
+        wgs84_pos:long      3.7148313576713052 .
+
+# Savaanstraat — 3 versions
+<https://stad.gent/.../parking-savaanstraat#2026-02-25T08:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Savaanstraat" ;
+        terms:isVersionOf   parkings-gent:parking-savaanstraat ;
+        terms:modified      "2026-02-25T08:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 280 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 270 ] ;
+        wgs84_pos:lat       51.050690 ;
+        wgs84_pos:long      3.720120 .
+
+<https://stad.gent/.../parking-savaanstraat#2026-02-25T11:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Savaanstraat" ;
+        terms:isVersionOf   parkings-gent:parking-savaanstraat ;
+        terms:modified      "2026-02-25T11:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 280 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 130 ] ;
+        wgs84_pos:lat       51.050690 ;
+        wgs84_pos:long      3.720120 .
+
+<https://stad.gent/.../parking-savaanstraat#2026-02-25T15:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Savaanstraat" ;
+        terms:isVersionOf   parkings-gent:parking-savaanstraat ;
+        terms:modified      "2026-02-25T15:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 280 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 45 ] ;
+        wgs84_pos:lat       51.050690 ;
+        wgs84_pos:long      3.720120 .
+
+# Sint-Michiels — 2 versions
+<https://stad.gent/.../parking-sint-michiels#2026-02-25T09:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Sint-Michiels" ;
+        terms:isVersionOf   parkings-gent:parking-sint-michiels ;
+        terms:modified      "2026-02-25T09:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 500 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 210 ] ;
+        wgs84_pos:lat       51.055100 ;
+        wgs84_pos:long      3.719800 .
+
+<https://stad.gent/.../parking-sint-michiels#2026-02-25T15:00:00+01:00>
+        rdf:type            mv:ParkingLot ;
+        rdfs:label          "Sint-Michiels" ;
+        terms:isVersionOf   parkings-gent:parking-sint-michiels ;
+        terms:modified      "2026-02-25T15:00:00+01:00"^^xsd:dateTime ;
+        mv:capacity         [ rdf:type mv:Capacity ; mv:totalCapacity 500 ] ;
+        mv:capacity         [ rdf:type mv:RealTimeCapacity ; mv:currentValue 490 ] ;
+        wgs84_pos:lat       51.055100 ;
+        wgs84_pos:long      3.719800 .`;
+
+function enableDisableParseButton(enable) {
+  const parseBtn = document.getElementById('parse-btn');
+  parseBtn.disabled = !enable;
+  parseBtn.style.opacity = enable ? 1 : 0.5;
+}
+
+function loadExample() {
+  document.getElementById('turtle-input').value = EXAMPLE;
+  parse();
+  enableDisableParseButton(true);
+}
+
+// File upload
+document.getElementById('file-input').addEventListener('change', function() {
+  const f = this.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('turtle-input').value = e.target.result;
+    parse();
+  };
+  reader.readAsText(f);
+  enableDisableParseButton(true);
+});
+
+// ── Fetch helpers ────────────────────────────────────────────────────────────
+const TTL_HEADERS = { Accept: 'text/turtle, application/n-triples, text/n3, */*' };
+
+async function fetchTurtle(url) {
+  // Try direct first, then CORS proxy
+  try {
+    const res = await fetch(url, { headers: TTL_HEADERS });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } catch (e) {
+    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const res = await fetch(proxy, { headers: TTL_HEADERS });
+    if (!res.ok) throw new Error(`HTTP ${res.status} (via proxy)`);
+    return await res.text();
+  }
+}
+
+// Extract tree:relation target URLs from a parsed N3 store
+const TREE_RELATION = 'https://w3id.org/tree#relation';
+const TREE_NODE_PRED = 'https://w3id.org/tree#node';
+
+function extractRelationUrls(store) {
+  const urls = new Set();
+  // tree:relation points to a blank node, which has tree:node <url>
+  store.getQuads(null, TREE_RELATION, null, null).forEach(q => {
+    const relNode = q.object;
+    store.getQuads(relNode, TREE_NODE_PRED, null, null).forEach(q2 => {
+      if (N3.Util.isNamedNode(q2.object)) urls.add(q2.object.value);
+    });
+  });
+  return urls;
+}
+
+function setProgress(text, pct, indeterminate = false) {
+  const box = document.getElementById('progress-box');
+  const bar = document.getElementById('progress-bar');
+  const txt = document.getElementById('progress-text');
+  box.classList.add('visible');
+  txt.textContent = text;
+  if (indeterminate) {
+    bar.classList.add('indeterminate');
+    bar.style.width = '';
+  } else {
+    bar.classList.remove('indeterminate');
+    bar.style.width = pct + '%';
+  }
+}
+
+function hideProgress() {
+  document.getElementById('progress-box').classList.remove('visible');
+  document.getElementById('progress-bar').classList.remove('indeterminate');
+}
+
+// ── URL fetch (plain) ─────────────────────────────────────────────────────────
+async function fetchFromUrl() {
+  const url = document.getElementById('url-input').value.trim();
+  const btn = document.getElementById('fetch-btn');
+  const ldesMode = document.getElementById('ldes-mode').checked;
+
+  if (!url) { showError('Please enter a URL.'); return; }
+  hideError();
+  btn.disabled = true;
+
+  if (ldesMode) {
+    await fetchLdesStream(url, btn);
+    enableDisableParseButton(false);
+  } else {
+    btn.textContent = '⏳ Fetching…';
+    setProgress('Fetching page…', 0, true);
+    try {
+      const text = await fetchTurtle(url);
+      document.getElementById('turtle-input').value = text;
+      hideProgress();
+      await parse();
+      enableDisableParseButton(true);
+    } catch (e) {
+      hideProgress();
+      showError(`Fetch failed: ${e.message}. The server may not allow cross-origin requests.`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Fetch';
+    }
+  }
+}
+
+// ── LDES stream crawler ───────────────────────────────────────────────────────
+async function fetchLdesStream(startUrl, btn) {
+  btn.textContent = '⏳ Crawling…';
+
+  const visited = new Set();
+  const queue = [startUrl];
+  const allQuads = [];
+  let pageCount = 0;
+  let prefixCount = 0;
+
+  try {
+    while (queue.length > 0) {
+      const url = queue.shift();
+      if (visited.has(url)) continue;
+      visited.add(url);
+      pageCount++;
+
+      setProgress(`Fetching page ${pageCount}… (${queue.length} queued, ${allQuads.length} triples so far)`, 0, true);
+
+      let text;
+      try {
+        text = await fetchTurtle(url);
+      } catch (e) {
+        console.warn(`Skipping unreachable page ${url}: ${e.message}`);
+        continue;
+      }
+
+      // Parse this page
+      try {
+        const { store: pageStore, prefixCount: pc } = await parseTurtle(text, url);
+        pageStore.getQuads(null, null, null, null).forEach(q => allQuads.push(q));
+        prefixCount = Math.max(prefixCount, pc);
+        // Find relation links for next pages
+        const newUrls = extractRelationUrls(pageStore);
+        newUrls.forEach(u => { if (!visited.has(u)) queue.push(u); });
+      } catch(e) {
+        console.warn(`Skipping unparseable page ${url}: ${e.message}`);
+      }
+
+      setProgress(
+        `Crawled ${pageCount} page${pageCount > 1 ? 's' : ''} · ${allQuads.length} triples · ${queue.length} pages queued`,
+        0, true
+      );
+    }
+
+    setProgress(`Done! ${pageCount} pages, ${allQuads.length} triples. Extracting locations…`, 90);
+
+    // Build a combined store and extract locations
+    const combinedStore = new N3.Store();
+    allQuads.forEach(q => { try { combinedStore.addQuad(q); } catch(e) {} });
+    const locations = extractLocationsFromStore(combinedStore);
+
+    document.getElementById('turtle-input').value =
+      `# LDES stream — ${pageCount} page${pageCount>1?'s':''} crawled
+`
+      + `# ${allQuads.length} triples loaded
+`
+      + `# ${locations.length} location(s) found`;
+
+    hideProgress();
+    renderLocations(locations, prefixCount);
+
+  } catch (e) {
+    hideProgress();
+    showError(`LDES crawl failed: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fetch';
+  }
+}
+</script>
+</body>
+</html>
+`;

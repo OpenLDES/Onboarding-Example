@@ -1,46 +1,100 @@
 # Onboarding Example - a Practical Guide to Publishing and Consuming a LDES
-This sample project describes step by step how to publish data as [LDES](https://semiceu.github.io/LinkedDataEventStreams/) and how that [linked data](https://en.wikipedia.org/wiki/Linked_data) can be consumed.
+
+This sample project describes step by step how to publish data
+as [LDES](https://semiceu.github.io/LinkedDataEventStreams/) and how
+that [linked data](https://en.wikipedia.org/wiki/Linked_data) can be consumed.
 
 ## Example Data Set
-We start from a continuous feed of data containing the real time occupancy of park & ride locations in Ghent found [here](https://data.stad.gent/explore/dataset/real-time-bezetting-pr-gent/information/). The data is updated every couple of minutes. We will use this data set as an example because it allows us to showcase what LDES is made for: replicating a (historical) data set and synchronize updates on a continuous basis. In addition, the data set also contains geographical information which will allow us to showcase the ability to retrieve a subset of data based on geography in addition to the time axis. Because the dataset grows very rapidly, we will show how to keep storage under control. For simplicity we will start with a simple linked data model and migrate it to an official linked data vocabulary to allow ingesting another data set from the same domain found [here](https://data.stad.gent/explore/dataset/bezetting-parkeergarages-real-time/information/?sort=-occupation) in the same LDES.
+
+We start from a continuous feed of data containing the real time occupancy of public parkings
+in Ghent found [here](https://data.stad.gent/explore/dataset/bezetting-parkeergarages-real-time/information/).
+The data is updated every couple of minutes. We will use this data set as an example because it
+allows us to showcase what LDES is made for: replicating a (historical) data set and synchronize
+updates on a continuous basis. In addition, the data set also contains geographical information
+which will allow us to showcase the ability to retrieve a subset of data based on geography in
+addition to the time axis. Because the dataset grows very rapidly, we will show how to keep storage
+under control.
+For simplicity we will start with a simple linked data model and migrate it to an official linked
+data vocabulary to allow ingesting another data set from the same domain
+found [here](https://data.stad.gent/explore/dataset/bezetting-parkeergarages-real-time/information/)
+in the same LDES.
 
 ## Prerequisites
-To follow along and play with the examples you will need some knowledge of [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/) and [git](https://git-scm.com/). You will also need an editor such as [VSCodium](https://vscodium.com/) (or [VS Code](https://code.visualstudio.com/) if you really insist). And obviously, you need an open mind and feel like diving into the wonderful world of linked data and RDF.
+
+To follow along and play with the examples you will need some knowledge
+of [Docker](https://www.docker.com/), [Docker Compose](https://docs.docker.com/compose/)
+and [git](https://git-scm.com/). 
+
+You will also need an editor such
+as [IntelliJ IDEA](https://www.jetbrains.com/idea/), [VSCodium](https://vscodium.com/) (
+or [VS Code](https://code.visualstudio.com/) if you really insist). And obviously, you need an open
+mind and feel like diving into the wonderful world of linked data and RDF.
 
 ### Bash
-In order to run the commands in the tutorials you will to run them in a bash shell. On Windows, you need to use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about). This is also needed for Docker (see later). On MacOS, you can use the standard Z shell (zsh) but you may bump into some minor syntactic issues so it is better to use a bash shell. Finally, on Linux, the bash shell is available by default.
 
-### Visual Studio Code
-You can use any editor or development environment that you like to look at the source files. However, Visual Studio Code and its open source alternative VSCodium offer a few nice features, such as previewing this and other markdown files as well as to manage [Docker](https://code.visualstudio.com/docs/containers/overview) and [Git](https://code.visualstudio.com/docs/sourcecontrol/overview) from within the environent.
+In order to run the commands in the tutorials you will to run them in a bash shell. On Windows, you
+need to use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about).
+This is also needed for Docker (see later). On MacOS, you can use the standard Z shell (zsh) but you
+may bump into some minor syntactic issues so it is better to use a bash shell. Finally, on Linux,
+the bash shell is available by default.
+
+### Your favorite editor
+
+You can use any editor or development environment that you like to look at the source files.
+However, your favorite editor and its open source alternatives offer a few nice features,
+such as previewing this and other markdown files as well as to
+manage [Docker](https://code.visualstudio.com/docs/containers/overview)
+and [Git](https://code.visualstudio.com/docs/sourcecontrol/overview) from within the environment.
 
 ### Docker
-To try the examples yourself, you will also need to install [Docker Desktop](https://www.docker.com/products/docker-desktop/) on your [Windows](https://docs.docker.com/desktop/install/windows-install/) or [MacOS](https://docs.docker.com/desktop/install/mac-install/). If you have a Linux system, you can either use the [desktop](https://docs.docker.com/desktop/install/linux-install/) or the [server](https://docs.docker.com/engine/install/) version.
+
+To try the examples yourself, you will also need to
+install [Docker Desktop](https://www.docker.com/products/docker-desktop/) on
+your [Windows](https://docs.docker.com/desktop/install/windows-install/)
+or [MacOS](https://docs.docker.com/desktop/install/mac-install/). If you have a Linux system, you
+can either use the [desktop](https://docs.docker.com/desktop/install/linux-install/) or
+the [server](https://docs.docker.com/engine/install/) version.
 
 ### Git
-To download and use this repository you will need to install [Git](https://git-scm.com/downloads). After that you can download this repository locally by using the following (in a bash shell):
+
+To download and use this repository you will need to install [Git](https://git-scm.com/downloads).
+After that you can download this repository locally by using the following (in a bash shell):
+
 ```bash
 cd ~
-git clone https://github.com/Informatievlaanderen/VSDS-Onboarding-Example.git
+git clone https://github.com/OpenLDES/Onboarding-Example.git
 ```
-> **Note** that the `git clone` command will create a directory `./VSDS-Onboarding-Example`. You need to open that folder in Visual Studio Code to get started.
+
+> **Note** that the `git clone` command will create a directory `./Onboarding-Example`. You need to
+> open that folder in your favorite editor to get started.
 
 ## Where to start?
-We suggest you look at the examples in the following order, but of course, feel free to skip parts if you are already familiar with some topics.
 
-> **Note**: before running any of the commands in the tutorials please ensure you are located at that location in your bash shell.
+We suggest you look at the examples in the following order, but of course, feel free to skip parts
+if you are already familiar with some topics.
+
+> **Note**: before running any of the commands in the tutorials please ensure you are located at
+> that location in your bash shell.
 
 ### Tutorials for Data Publishers
+
 * [Setting up a minimal LDES Server](./minimal-server/README.md) (directly ingesting linked data)
 * [Setting up a minimal LDIO Workbench](./minimal-workbench/README.md) (converting to linked data)
-* [Publishing a simple data set with a basic setup](./basic-setup/README.md) (converting to linked data before ingesting it)
-* [Publishing as a standard linked open data model](./advanced-conversion/README.md) (using a standard vocabulary for publication)
+* [Publishing a simple data set with a basic setup](./basic-setup/README.md) (converting to linked
+  data before ingesting it)
+* [Publishing as a standard linked open data model](./advanced-conversion/README.md) (using a
+  standard vocabulary for publication)
 * [Publishing a protected LDES](./protected-setup/README.md) (limitting access to a LDES)
 * [Publishing an enriched data model](./enrich-model/README.md) (combining linked data models)
 
 ### Tutorials for Data Clients
+
 * [Setting up a minimal LDES Client](./minimal-client/README.md) (consuming a local LDES)
 * [Consuming a public LDES](./public-ldes/README.md) (accessing a public LDES)
-* [Consuming a protected LDES](./protected-setup/README.md#access-the-ldes-server-through-the-reverse-proxy) (accessing a non-public LDES)
+* [Consuming a protected LDES](./protected-setup/README.md#access-the-ldes-server-through-the-reverse-proxy) (
+  accessing a non-public LDES)
 
 ### Tutorials for Data Brokers
-* [Republishing an existing LDES](./broker-setup/README.md) (publishing a different LDES view or a derived LDES)
+
+* [Republishing an existing LDES](./broker-setup/README.md) (publishing a different LDES view or a
+  derived LDES)

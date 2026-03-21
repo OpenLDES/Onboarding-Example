@@ -1,4 +1,6 @@
 logging:
   level:
-    root: WARN
-    be.vlaanderen.informatievlaanderen.ldes.server.Application: INFO
+    root: INFO
+    be:
+      vlaanderen:
+        informatievlaanderen: DEBUG

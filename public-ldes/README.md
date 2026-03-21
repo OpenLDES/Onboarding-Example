@@ -1,7 +1,7 @@
 # Consuming a Public LDES
-> **UPDATED** this tutorial has been changed to define the publish pipeline dynamically. You can find the previous version [here](https://github.com/Informatievlaanderen/VSDS-Onboarding-Example/tree/v1.0.0/public-ldes).
+> **UPDATED** this tutorial has been changed to define the publish pipeline dynamically. You can find the previous version [here](https://github.com/OpenLDES/Onboarding-Example/tree/v1.0.0/public-ldes).
 
-This tutorial will show you how to consume an existing public [Linked Data Event Stream (LDES)](https://semiceu.github.io/LinkedDataEventStreams/) using a simple pipeline in the [LDIO Workbench](https://informatievlaanderen.github.io/VSDS-Linked-Data-Interactions/) and sending the LDES members to a custom backend system for further processing or querying.
+This tutorial will show you how to consume an existing public [Linked Data Event Stream (LDES)](https://semiceu.github.io/LinkedDataEventStreams/) using a simple pipeline in the [LDIO Workbench](https://openldes.github.io/Linked-Data-Interactions/) and sending the LDES members to a custom backend system for further processing or querying.
 
 Please see the [introduction](../README.md) for the pre-requisites, as well as an overview of all examples.
 
@@ -17,7 +17,7 @@ So, the minimal pipeline that you need is a LDES Client plus one of the supporte
 In fact, the pipeline configuration is the only thing we need in addition to a docker compose file! So, how does our docker compose file look like? Well, it is as simple as this for the workbench part:
 ```yaml
   ldio-workbench:
-    image: ldes/ldi-orchestrator:2.12.0
+    image: openldes/ldi-orchetstrator:latest
     environment:
       - SERVER_PORT=80
     ports:

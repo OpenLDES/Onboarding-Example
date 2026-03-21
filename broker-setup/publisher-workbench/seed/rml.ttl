@@ -1,0 +1,79 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr:     <http://www.w3.org/ns/r2rml#> .
+@prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
+@prefix carml:  <http://carml.taxonic.com/carml/> .
+@prefix :       <https://example.org/ns/tutorial/advanced-conversion#> .
+@prefix mv:     <http://schema.mobivoc.org/#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix temp:   <https://temp.org/ns/advanced-compose#> .
+@prefix fnml:  <http://semweb.mmlab.be/ns/fnml#> .
+@prefix grel:  <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+@prefix fno:   <https://w3id.org/function/ontology#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+
+:TriplesMap a rr:TriplesMap;
+rml:logicalSource [
+  a rml:LogicalSource;
+  rml:source [ a carml:Stream ];
+  rml:referenceFormulation ql:CSV
+];
+rr:subjectMap [
+  rr:graphMap [ rr:template "{id}" ];
+  rml:reference "id";
+  rr:class mv:ParkingLot
+];
+rr:predicateObjectMap [
+  rr:predicate temp:name;
+  rr:objectMap [ rml:reference "name" ]
+],[
+  rr:predicate temp:lastupdate;
+  rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
+], [
+  rr:predicate temp:openingtimesdescription;
+  rr:objectMap [ rml:reference "openingtimesdescription" ]
+], [
+  rr:predicate temp:operatorinformation;
+  rr:objectMap [ rml:reference "operatorinformation" ]
+], [
+  rr:predicate temp:freeparking;
+  rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
+], [
+  rr:predicate temp:numberofspaces;
+  rr:objectMap [ rml:reference "totalcapacity"; rr:datatype xsd:integer ]
+], [
+  rr:predicate temp:availablespaces;
+  rr:objectMap [ rml:reference "availablecapacity"; rr:datatype xsd:integer ]
+], [
+  rr:predicate temp:occupation;
+  rr:objectMap [ rml:reference "occupancytrend"; rr:datatype xsd:integer ]
+], [
+  rr:predicate temp:latitude ;
+  rr:objectMap [
+    rr:datatype xsd:double ;
+    fnml:functionValue [
+      fno:exec grel:array_get ;
+      grel:p_array [
+        fno:exec grel:string_split ;
+        grel:p_string [ rml:reference "location" ] ;
+        grel:p_string_sep ", "
+      ] ;
+      grel:p_int 0
+    ]
+  ]
+], [
+  rr:predicate temp:longitude ;
+  rr:objectMap [
+    rr:datatype xsd:double ;
+    fnml:functionValue [
+      fno:exec grel:array_get ;
+      grel:p_array [
+        fno:exec grel:string_split ;
+        grel:p_string [ rml:reference "location" ] ;
+        grel:p_string_sep ", "
+      ] ;
+      grel:p_int 1
+    ]
+  ]
+] .

@@ -1,0 +1,29 @@
+PREFIX schema: <http://schema.org/>
+PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/parking/>
+
+CONSTRUCT {
+  ?parking schema:geo ?geoCoords .
+  
+  ?geoCoords a schema:GeoCoordinates ;
+    schema:latitude ?lat ;
+    schema:longitude ?long ;
+    geo:lat ?lat ;
+    geo:long ?long .
+}
+WHERE {
+  ?parking a schema:ParkingFacility ;
+    schema:latitude ?locationString .
+  
+  # Parse the "lat, long" format from location column
+  BIND(STRBEFORE(?locationString, ",") AS ?latStr)
+  BIND(STRAFTER(?locationString, ", ") AS ?longStr)
+  
+  # Convert to decimal
+  BIND(xsd:decimal(?latStr) AS ?lat)
+  BIND(xsd:decimal(?longStr) AS ?long)
+  
+  # Create URI for GeoCoordinates
+  BIND(IRI(CONCAT(STR(?parking), "/geo")) AS ?geoCoords)
+}

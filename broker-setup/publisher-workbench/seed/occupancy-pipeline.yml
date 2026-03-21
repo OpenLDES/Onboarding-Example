@@ -1,16 +1,17 @@
-    # This is a pipeline for demonstrating CSV to linked data conversion using RML
-name: park-n-ride-pipeline
-description: "Polls for CSV park-and-ride data, converts to linked data, creates versions & sends to LDES server."
+# This is a pipeline for demonstrating CSV to linked data conversion using RML
+name: occupancy-pipeline
+description: "Polls for CSV public parking occupancy data, converts to linked data, creates versions & sends to LDES server."
 
 input:
   name: Ldio:HttpInPoller
   config:
-    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/csv?lang=en&timezone=Europe%2FBrussels
+    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/csv?lang=en&timezone=Europe%2FBrussels
     cron: 30 * * * * *
   adapter:
     name: Ldio:RmlAdapter
     config:
       mapping: |
+        @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
         @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
         @prefix rr:     <http://www.w3.org/ns/r2rml#> .
@@ -20,54 +21,73 @@ input:
         @prefix mv:     <http://schema.mobivoc.org/#> .
         @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
         @prefix temp:   <https://temp.org/ns/advanced-compose#> .
+        @prefix fnml:  <http://semweb.mmlab.be/ns/fnml#> .
+        @prefix grel:  <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+        @prefix fno:   <https://w3id.org/function/ontology#> .
+        
+        :TriplesMap a rr:TriplesMap ;
+        rml:logicalSource [
+          a rml:LogicalSource;
+          rml:source [ a carml:Stream ];
+          rml:referenceFormulation ql:CSV
+        ] ;
+        
+        rr:subjectMap [
+          rr:graphMap [ rr:template "{id}" ];
+          rml:reference "id";
+          rr:class mv:ParkingLot
+        ] ;
+        
+        rr:predicateObjectMap [
+          rr:predicate temp:name;
+          rr:objectMap [ rml:reference "name" ]
+        ] ;
 
-        :TriplesMap a rr:TriplesMap;
-          rml:logicalSource [
-            a rml:LogicalSource;
-            rml:source [ a carml:Stream ];
-            rml:referenceFormulation ql:CSV
-          ];
-          rr:subjectMap [
-            rr:graphMap [ rr:template "{urllinkaddress}" ];
-            rml:reference "urllinkaddress";
-            rr:class mv:ParkingLot
-          ];
-          rr:predicateObjectMap [
-            rr:predicate temp:name;
-            rr:objectMap [ rml:reference "name" ]
-          ],[
-            rr:predicate temp:lastupdate;
-            rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
-          ], [
-            rr:predicate temp:openingtimesdescription;
-            rr:objectMap [ rml:reference "openingtimesdescription" ]
-          ], [
-            rr:predicate temp:operatorinformation;
-            rr:objectMap [ rml:reference "operatorinformation" ]
-          ], [
-            rr:predicate temp:freeparking;
-            rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:numberofspaces;
-            rr:objectMap [ rml:reference "numberofspaces"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:availablespaces;
-            rr:objectMap [ rml:reference "availablespaces"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:occupation;
-            rr:objectMap [ rml:reference "occupation"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:latitude;
-            rr:objectMap [ rml:reference "latitude"; rr:datatype xsd:double ]
-          ], [
-            rr:predicate temp:longitude;
-            rr:objectMap [ rml:reference "longitude"; rr:datatype xsd:double ]
-          ].
+        rr:predicateObjectMap [
+          rr:predicate temp:lastupdate;
+          rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:openingtimesdescription;
+          rr:objectMap [ rml:reference "openingtimesdescription" ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:operatorinformation;
+          rr:objectMap [ rml:reference "operatorinformation" ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:freeparking;
+          rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:numberofspaces;
+          rr:objectMap [ rml:reference "totalcapacity"; rr:datatype xsd:integer ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:availablespaces;
+          rr:objectMap [ rml:reference "availablecapacity"; rr:datatype xsd:integer ]
+        ] ;
+
+        rr:predicateObjectMap [
+          rr:predicate temp:occupation;
+          rr:objectMap [ rml:reference "occupancytrend"; rr:datatype xsd:integer ]
+        ] ;
+        
+        rr:predicateObjectMap [
+          rr:predicate temp:location ;
+          rr:objectMap [ rml:reference "location" ]
+        ] .
 
 transformers:
   - name: Ldio:SparqlConstructTransformer
     config:
       query: |
+        PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>
         PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX dct:     <http://purl.org/dc/terms/>
@@ -88,8 +108,8 @@ transformers:
             mv:capacity [a mv:Capacity; mv:totalCapacity ?numberofspaces] ;
             mv:capacity [a mv:RealTimeCapacity; mv:currentValue ?availablespaces] ;
             mv:rateOfOccupancy ?occupation ;
-            geo:lat ?latitude ;
-            geo:long ?longitude .
+            geo:lat ?lat ;
+            geo:long ?long .
         } WHERE {
           ?id rdf:type mv:ParkingLot .
           ?id temp:lastupdate ?lastupdate .
@@ -100,8 +120,12 @@ transformers:
           optional { ?id temp:numberofspaces ?numberofspaces . }
           optional { ?id temp:availablespaces ?availablespaces . }
           optional { ?id temp:occupation ?occupation . }
-          optional { ?id temp:latitude ?latitude . }
-          optional { ?id temp:longitude ?longitude . }
+          optional { ?id temp:location ?locationString . }
+        
+          BIND(STRBEFORE(?locationString, ",") AS ?latStr)
+          BIND(STRAFTER(?locationString, ", ") AS ?longStr)
+          BIND(xsd:decimal(?latStr) AS ?lat)
+          BIND(xsd:decimal(?longStr) AS ?long)         
         }
 
   - name: Ldio:VersionObjectCreator
@@ -118,3 +142,4 @@ outputs:
       endpoint: http://publisher-server/ldes/occupancy
       rdf-writer:
         content-type: application/rdf+protobuf
+  - name: Ldio:ConsoleOut
