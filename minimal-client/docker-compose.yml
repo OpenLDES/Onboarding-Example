@@ -7,16 +7,16 @@ services:
   ldio-workbench:
     image: openldes/ldi-orchestrator:latest
     network_mode: "host"
-    environment:
-      - SERVER_PORT=9006
+    ports:
+      - 9006:8080
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9006/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
 
 
   sink-system:
     image: ghcr.io/informatievlaanderen/test-message-sink:latest
     ports:
-      - 9007:80
+      - 9007:8080
     networks:
       - basic-client
     environment:

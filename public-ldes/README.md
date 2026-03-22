@@ -19,15 +19,14 @@ In fact, the pipeline configuration is the only thing we need in addition to a d
   ldio-workbench:
     image: openldes/ldi-orchestrator:latest
     environment:
-      - SERVER_PORT=80
     ports:
-      - 9006:80
+      - 9006:8080
     networks:
       - public-ldes 
     depends_on:
       - sink-system
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://ldio-workbench/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldio-workbench:8080/actuator/health"]
 ```
 > **Note** that we included a health check for our workbench so we can verify when it is initialized and ready. We put it in the same network as our sink system and add a dependancy to ensure the sink system is fully available to accept the LDES members. We also expose the workbench using port mapping because we need to provide it with a LDES Client pipeline.
 

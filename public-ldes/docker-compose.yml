@@ -9,15 +9,14 @@ services:
   ldio-workbench:
     image: openldes/ldi-orchestrator:latest
     environment:
-      - SERVER_PORT=80
     ports:
-      - 9006:80
+      - 9006:8080
     networks:
       - public-ldes 
     depends_on:
       - sink-system
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://ldio-workbench/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldio-workbench:8080/actuator/health"]
 
 
   ### -- Backend System --
@@ -25,7 +24,7 @@ services:
   sink-system:
     image: ghcr.io/informatievlaanderen/test-message-sink:latest
     ports:
-      - 9007:80
+      - 9007:8080
     networks:
       - public-ldes
     depends_on:

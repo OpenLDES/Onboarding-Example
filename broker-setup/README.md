@@ -190,7 +190,7 @@ publisher-server:
   volumes:
     - ./publisher-server/application.yml:/application.yml:ro
   ports:
-    - 9003:80
+    - 9003:8080
   networks:
     - publisher-network
     - broker-network
@@ -200,7 +200,6 @@ publisher-server:
   environment:
     - LDESSERVER_HOSTNAME=http://publisher-server/ldes
     - SIS_DATA=/tmp
-    - SERVER_PORT=80
     - SERVER_SERVLET_CONTEXTPATH=/ldes
     - SPRING_DATASOURCE_URL=jdbc:postgresql://publisher-database:5432/${PUBLISHER_POSTGRES_DB}
     - SPRING_DATASOURCE_USERNAME=${PUBLISHER_POSTGRES_USER}
@@ -212,25 +211,24 @@ publisher-server:
     - LDESSERVER_MAINTENANCECRON=0 0 12 * * * # daily at noon (UTC time)
     - LDESSERVER_COMPACTIONDURATION=P14D
   healthcheck:
-    test: [ "CMD", "wget", "-qO-", "http://publisher-server/ldes/actuator/health" ]
+    test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://publisher-server:8080/ldes/actuator/health" ]
     start_period: 45s
 
 
 publisher-workbench:
   image: openldes/ldi-orchetstrator:latest
   environment:
-    - SERVER_PORT=80
   volumes:
     - ./publisher-workbench/application.yml:/ldio/application.yml:ro
   ports:
-    - 9004:80
+    - 9004:8080
   networks:
     - publisher-network
   depends_on:
     publisher-server:
       condition: service_healthy
   healthcheck:
-    test: [ "CMD", "wget", "-qO-", "http://publisher-workbench/actuator/health" ]
+    test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://publisher-workbench:8080/actuator/health" ]
     start_period: 5s
 ```
 
@@ -247,7 +245,7 @@ broker-server:
   volumes:
     - ./broker-server/application.yml:/application.yml:ro
   ports:
-    - 9001:80
+    - 9001:8080
   networks:
     - broker-network
   depends_on:
@@ -256,7 +254,6 @@ broker-server:
   environment:
     - LDESSERVER_HOSTNAME=http://localhost:9001/ldes
     - SIS_DATA=/tmp
-    - SERVER_PORT=80
     - SERVER_SERVLET_CONTEXTPATH=/ldes
     - SPRING_DATASOURCE_URL=jdbc:postgresql://broker-database:5432/${BROKER_POSTGRES_DB}
     - SPRING_DATASOURCE_USERNAME=${BROKER_POSTGRES_USER}
@@ -268,18 +265,17 @@ broker-server:
     - LDESSERVER_MAINTENANCECRON=0 */3 * * * * # every 3 minutes
     - LDESSERVER_COMPACTIONDURATION=PT5M # keep only 5 minutes
   healthcheck:
-    test: [ "CMD", "wget", "-qO-", "http://broker-server/ldes/actuator/health" ]
+    test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://broker-server:8080/ldes/actuator/health" ]
     start_period: 45s
 
 
 broker-workbench:
   image: openldes/ldi-orchetstrator:latest
   environment:
-    - SERVER_PORT=80
   volumes:
     - ./broker-workbench/application.yml:/ldio/application.yml:ro
   ports:
-    - 9002:80
+    - 9002:8080
   networks:
     - publisher-network
     - broker-network
@@ -287,7 +283,7 @@ broker-workbench:
     broker-server:
       condition: service_healthy
   healthcheck:
-    test: [ "CMD", "wget", "-qO-", "http://broker-workbench/actuator/health" ]
+    test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://broker-workbench:8080/actuator/health" ]
     start_period: 5s
 ```
 

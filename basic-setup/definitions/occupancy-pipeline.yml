@@ -19,6 +19,6 @@ input:
 outputs:
   - name: Ldio:HttpOut
     config:
-      endpoint: http://ldes-server/ldes/occupancy
+      endpoint: http://ldes-server:8080/ldes/occupancy
       rdf-writer:
         content-type: application/n-triples

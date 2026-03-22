@@ -10,14 +10,14 @@ an overview of all examples.
 
 ## Copy & Paste Rules!
 
-To kickstart this tutorial we can use the [basic setup tutorial](../basic-setup/README.md).
+To kickstart this tutorial, we can use the [basic setup tutorial](../basic-setup/README.md).
 
 For the server we only will need to change the actual model. Everything else can stay the same: we
 will still need to volume mount the server configuration file and provide the database connection
 string (which we have changed to reflect our tutorial).
 
 The workbench is where we need to change a few things: we'll need to transform our custom model to
-the standard vocabulary. To make it a bit more interesting we'll start from an actual real-time
+the standard vocabulary. To make it a bit more interesting, we'll start from an actual real-time
 message which contains more than one state object. In fact, we'll be checking for changes on a
 regular basis. Now we have a real linked data event stream!
 

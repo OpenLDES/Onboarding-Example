@@ -65,13 +65,12 @@ the [advanced conversion docker compose](../advanced-conversion/docker-compose.y
   ldes-server:
     image: openldes/ldes-server:latest
     ports:
-      - 9003:80
+      - 9003:8080
     networks:
       - protected-setup-server
     depends_on:
       - ldes-postgresdb
     environment:
-      - SERVER_PORT=80
       - LDESSERVER_HOSTNAME=http://host.docker.internal:9003
       - SIS_DATA=/tmp
       - SERVER_SERVLET_CONTEXTPATH=
@@ -84,7 +83,7 @@ the [advanced conversion docker compose](../advanced-conversion/docker-compose.y
       - LDESSERVER_FRAGMENTATIONCRON=*/1 * * * * *
       - LDESSERVER_MAINTENANCECRON=-  # no retention / compaction / deletion
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://ldes-server/actuator/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldes-server:8080/actuator/health" ]
       interval: 12s
       timeout: 3s
       retries: 20
@@ -93,13 +92,12 @@ the [advanced conversion docker compose](../advanced-conversion/docker-compose.y
   server-workbench:
     image: openldes/ldi-orchestrator:latest
     environment:
-      - SERVER_PORT=80
     ports:
-      - 9004:80
+      - 9004:8080
     networks:
       - protected-setup-server
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://server-workbench/actuator/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://server-workbench:8080/actuator/health" ]
     depends_on:
       - ldes-server
 ```
@@ -120,23 +118,22 @@ for which we can use a [Test Message Sink](https://github.com/OpenLDES/LDES-E2E-
   client-workbench:
     image: openldes/ldi-orchestrator:latest
     environment:
-      - SERVER_PORT=80
     networks:
       - protected-setup-client
     ports:
-      - 9006:80
+      - 9006:8080
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       - sink-system
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://client-workbench/actuator/health" ]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://client-workbench:8080/actuator/health" ]
 
 
   sink-system:
     image: ghcr.io/informatievlaanderen/test-message-sink:latest
     ports:
-      - 9007:80
+      - 9007:8080
     networks:
       - protected-setup-client
     environment:

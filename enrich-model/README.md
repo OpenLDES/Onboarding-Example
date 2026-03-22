@@ -39,14 +39,13 @@ The workbench configuration is trivial as well:
   ldio-workbench:
     image: openldes/ldi-orchestrator:latest
     environment:
-      - SERVER_PORT=80
       - LOGGING_LEVEL_ROOT=INFO
     ports:
-      - 9006:80
+      - 9006:8080
     networks:
       - enrich-model
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://ldio-workbench/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldio-workbench:8080/actuator/health"]
 ```
 > **Note** that we fully configure our workbench by providing environment variables and therefore do not need to map a configuration file. We also map the workbench port so we can feed it with our data.
 
@@ -55,7 +54,7 @@ Finally, we need to configure our sink system:
   sink-system:
     image: ghcr.io/informatievlaanderen/test-message-sink:latest
     ports:
-      - 9007:80
+      - 9007:8080
     networks:
       - enrich-model
     environment:
