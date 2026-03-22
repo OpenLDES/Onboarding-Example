@@ -91,7 +91,7 @@ the [advanced conversion docker compose](../advanced-conversion/docker-compose.y
 
 
   server-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
     ports:
@@ -118,7 +118,7 @@ for which we can use a [Test Message Sink](https://github.com/OpenLDES/LDES-E2E-
 
 ```yaml
   client-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
     networks:

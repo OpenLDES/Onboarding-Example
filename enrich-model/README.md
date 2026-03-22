@@ -37,7 +37,7 @@ services:
 The workbench configuration is trivial as well:
 ```yaml
   ldio-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
       - LOGGING_LEVEL_ROOT=INFO

@@ -61,6 +61,6 @@ input:
 outputs:
   - name: Ldio:HttpOut
     config:
-      endpoint: http://localhost/park-n-ride-pipeline
+      endpoint: http://localhost/occupancy-pipeline
       rdf-writer:
         content-type: application/n-triples

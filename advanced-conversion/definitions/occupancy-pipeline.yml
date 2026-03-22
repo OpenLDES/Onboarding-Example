@@ -1,4 +1,4 @@
-name: park-n-ride-pipeline
+name: occupancy-pipeline
 description: "Accepts intermediate (P+R) linked data in any RDF format, converts it to a standard model, creates a version & sends it to the LDES server."
 input:
   name: Ldio:HttpIn

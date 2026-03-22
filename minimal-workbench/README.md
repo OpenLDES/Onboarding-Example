@@ -41,15 +41,15 @@ transformation steps and sending the result to one or more output sinks.
 Various input components are available for starting a pipeline such as: accepting HTTP messages both
 using a push model (HTTP listener) and a pull model (HTTP poller), reading from Kafka, etc.
 
-If the source data is already linked data you can use a simple RDF adaptor which allows to parse
-various RDF serializations. If the source data is not yet linked data you can use either a JSON-LD
-adaptor to attach a JSON-LD context to a JSON message or alternatively a RML adaptor, which allows
-to create linked data from various other message formats, such as JSON, XML, CSV, etc.
+If the source data is already linked data, you can use a simple RDF adaptor which allows parsing
+various RDF serializations. If the source data is not yet linked data, you can use either a JSON-LD
+adaptor to attach a JSON-LD context to a JSON message or alternatively a RML adaptor, which allows 
+creating linked data from various other message formats, such as JSON, XML, CSV, etc.
 
 On the output side we also provide several possibilities such as POST-ing using HTTP, writing to
 Kafka, etc.
 
-We provide several transformation components for manipulating linked data but most data
+We provide several transformation components for manipulating linked data, but most data
 transformations can be done using a SPARQL construct transformation step. In addition, we also
 provide some components for more specific tasks such as enriching the data from some external HTTP
 source, converting GeoJson to Well Known Text (WKT), etc.
@@ -63,17 +63,17 @@ stable releases can be found [here](https://hub.docker.com/r/openldes/ldi-orches
 
 The example [docker compose file](./docker-compose.yml) only contains a LDIO service which runs in a
 private network and uses volume mapping to have its configuration file available in the container.
-As we will see in a minute, the pipeline starts with a HTTP listener and therefore we need a port
+As we will see in a minute, the pipeline starts with an HTTP listener, and therefore we need a port
 mapping to allow the workbench to receive HTTP messages.
 
 > **Note** that the workbench can contain more than one pipeline if needed. We simply need to define
 > our pipelines with a different name using lowercase or uppercase letters, digits, blanks and the
 > special characters `_`, `-`  & `.`.
 
-The [pipeline definition](./definitions/park-n-ride-pipeline.yml) starts with a name and a
+The [pipeline definition](./definitions/occupancy-pipeline.yml) starts with a name and a
 description. The latter is purely for documentation purposes, but the former is used as the base
 path on which the HTTP listener receives requests. In our case this is (based on the docker compose
-port mapping): http://localhost:9004/park-n-ride-pipeline. After that the definition continues with
+port mapping): http://localhost:9004/occupancy-pipeline. After that the definition continues with
 the input component and associated adapter, the (optional) transformation steps and the output(s).
 Let's look at these in more detail.
 
@@ -127,7 +127,7 @@ which returns:
 
 ```json
 {
-  "park-n-ride-pipeline": "RUNNING"
+  "occupancy-pipeline": "RUNNING"
 }
 ```
 
@@ -160,7 +160,7 @@ workbench logs. We use the following simple JSON-LD message (clipped to the rele
 To send the message into the pipeline:
 
 ```bash
-curl -X POST -H "Content-Type: application/ld+json" "http://localhost:9004/park-n-ride-pipeline" -d "@./data/message.jsonld"
+curl -X POST -H "Content-Type: application/ld+json" "http://localhost:9004/occupancy-pipeline" -d "@./data/message.jsonld"
 ```
 
 Since it is a small and straight forward message the workbench log will almost immediately contain

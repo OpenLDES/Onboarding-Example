@@ -7,7 +7,7 @@ services:
   ### -- Data Client --
 
   ldio-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
     ports:

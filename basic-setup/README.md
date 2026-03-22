@@ -90,7 +90,7 @@ we can feed it with models from our custom data set.
 
 ```yaml
   ldio-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
     volumes:
@@ -200,7 +200,7 @@ curl -X POST -H "content-type: text/turtle" "http://localhost:9003/ldes/admin/ap
 curl -X POST -H "content-type: application/yaml" http://localhost:9004/admin/api/v1/pipeline --data-binary @./definitions/occupancy-pipeline.yml
 
 # send the message
-curl -X POST -H "Content-Type: application/json" "http://localhost:9004/park-n-ride-pipeline" -d "@./data/message.json"
+curl -X POST -H "Content-Type: application/json" "http://localhost:9004/occupancy-pipeline" -d "@./data/message.json"
 ```
 
 > **Note** that we send the definitions to `http://localhost:9003/ldes` because we have defined

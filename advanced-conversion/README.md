@@ -497,7 +497,7 @@ formatted for clarity:
 > **Note** that `[ ... ]` now represents our _capacity_.
 
 Now that we have learned how to introduce structure in our target model we can create
-the [complete mapping](./definitions/park-n-ride-pipeline.yml#L10) using SPARQL construct and we
+the [complete mapping](./definitions/occupancy-pipeline.yml#L10) using SPARQL construct and we
 need to embed this transformation step in the workbench pipeline:
 
 ```yaml
@@ -516,7 +516,7 @@ transformers:
           ...
 ```
 
-> **Note** that in the [complete mapping](./definitions/park-n-ride-pipeline.yml#L10) when we query
+> **Note** that in the [complete mapping](./definitions/occupancy-pipeline.yml#L10) when we query
 > the properties from our source model that almost all of these query lines are wrapped by an
 `optional { ... }` construct. The reason for this is that any of these triples may be missing.
 > Remember that the `WHERE` clause is in essence a filter on the collection of source triples, where
@@ -525,7 +525,7 @@ transformers:
 
 ## Time Is Like a Clock in My Heart
 
-If you looked closely at the [Park & Ride pipeline](./definitions/park-n-ride-pipeline.yml) you may
+If you looked closely at the [Park & Ride pipeline](./definitions/occupancy-pipeline.yml) you may
 have noticed that we also added a component to create version objects ourselves:
 
 ```yaml
@@ -687,7 +687,7 @@ which should return:
 ```json
 {
   "csv-pipeline": "RUNNING",
-  "park-n-ride-pipeline": "RUNNING"
+  "occupancy-pipeline": "RUNNING"
 }
 ```
 

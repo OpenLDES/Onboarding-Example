@@ -17,7 +17,7 @@ So, the minimal pipeline that you need is a LDES Client plus one of the supporte
 In fact, the pipeline configuration is the only thing we need in addition to a docker compose file! So, how does our docker compose file look like? Well, it is as simple as this for the workbench part:
 ```yaml
   ldio-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     environment:
       - SERVER_PORT=80
     ports:

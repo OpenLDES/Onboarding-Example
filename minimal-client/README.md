@@ -72,7 +72,7 @@ outputs:
 The [docker compose](./docker-compose.yml) file isn't all that scary either. We just need a workbench service which looks like this:
 ```yaml
 ldio-workbench:
-  image: openldes/ldi-orchetstrator:latest
+  image: openldes/ldi-orchestrator:latest
   network_mode: "host"
   environment:
     - SERVER_PORT=9006
