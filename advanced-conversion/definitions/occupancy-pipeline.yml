@@ -40,6 +40,8 @@ transformers:
           optional { ?id temp:availablecapacity ?availablecapacity . }
           optional { ?id temp:latitude ?latitude . }
           optional { ?id temp:longitude ?longitude . }
+          BIND( STR(?id) AS ?string ).
+          BIND( REPLACE( ?string, "#", "/" ) AS ?newid ).
           VALUES (?temptype ?mappedtype) {
             ( "offStreetParkingGround" mv:ParkingLot )
             ( "carPark" mv:ParkingGarage )
@@ -47,7 +49,10 @@ transformers:
         }
   - name: Ldio:VersionObjectCreator
     config:
-      member-type: http://schema.mobivoc.org/#ParkingLot
+      member-type:
+         - http://schema.mobivoc.org/#ParkingLot
+         - http://schema.mobivoc.org/#ParkingGarage
+         - http://schema.mobivoc.org/#ParkingFacility
       delimiter: "#"
       date-observed-property: <http://purl.org/dc/terms/modified>
       generatedAt-property: http://purl.org/dc/terms/modified
@@ -55,6 +60,6 @@ transformers:
 outputs:
   - name: Ldio:HttpOut
     config:
-      endpoint: http://ldes-server/ldes/occupancy
+      endpoint: http://ldes-server:8080/ldes/occupancy
       rdf-writer:
         content-type: application/n-triples

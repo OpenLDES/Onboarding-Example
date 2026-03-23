@@ -641,16 +641,17 @@ it for you. But before we do that, let me tell you about how the LDES Server doe
 
 When you push one or more state objects to the LDES Server, it will look at the linked data and
 validate that there are no dangling nor shared blank nodes. Why is that? Well, as you know by now, a
-named node identifies something (a model!) that is identifiable while a blank nodes is something
-which is part of such a model and cannot exist on its own as a LDES member. The LDES Server can
-create a version object for some (identifiable!) model state but clearly that is not possible for a
-blank node. Therefore any dangling blank node (i.e. a blank node that does not belong to a named
+named node identifies something (a model!) that is identifiable while blank nodes are something
+that is part of such a model and cannot exist on its own as a LDES member. The LDES Server can
+create a version object for some (identifiable!) model state, but that is not possible for a
+blank node. Therefore, any dangling blank nodes (i.e. a blank node that does not belong to a named
 node) would not be versioned and data would be lost. A shared blank node is one that is used by two
 or more named nodes (state objects) and would have to be duplicated for each named node that uses it
 because the version objects created for these named nodes could be split across different LDES
-fragments on retrieval. Clearly that would be a problem because a state object would not be complete
-it the shared (sub)-state was not de-duplicated. However, in our opinion, this de-duplication is
-*not* a functionality that belongs to a LDES Server but rather a task for the source system. Any
+fragments on retrieval. Clearly, that would be a problem because a state object would not be
+complete
+if the shared (sub)-state was not de-duplicated. However, in our opinion, this de-duplication is
+*not* a functionality that belongs to an LDES Server but rather a task for the source system. Any
 message containing a dangling or shared blank node results in the message being refused. After this
 validation, the LDES Server creates a *new version* for *each* named node (i.e. state object) after
 grouping together all RDF statements (triples) that directly or indirectly (blank nodes) belong to
@@ -660,30 +661,29 @@ that model (i.e. it recusively follows are referenced blank nodes).
 > creates a version *each* time!
 
 But what if the model did *not* change its state? Obviously, we do not want to create a version if
-the state did not change. So, either we do not send those state objects to the LDES Server or we
+the state did not change. So, either we do not send those state objects to the LDES Server, or we
 create versions ourselves and send those to the LDES Server. Moreover, if we have a pipeline where
-we request for data (i.e. we poll a source system API) we typically will get the current state of a
+we request for data (i.e. we poll a source system API), we typically will get the current state of a
 system, that is, we get all changed and unchanged models. Unless we want the LDES Server to create
 unneeded version objects, we need to do our own state change detection and create versions
 ourselves.
 
 > **Note** that the LDES Server will verify for a version object if it has already received one with
-> the same ID. As a version object is considered *immutable*  (should not change!) it will *not*
-> store
-> it again, but instead the LDES Server will log a warning and ignore the duplicate member (version
-> object).
+> the same ID. As a version object is considered *immutable* (should not change!) it will *not*
+> store it again, but instead the LDES Server will log a warning and ignore the duplicate member (
+> version object).
 
-So, how can we detect changes? Well, clearly as the model can be large we do not want to do a full
-comparison to verify that a model has been altered but rather we want to rely on some modification
+So, how can we detect changes? Well, as the model can be large, we do not want to do a full
+comparison to verify that a model has been altered, but rather we want to rely on some modification
 or update timestamp. Therefore, we can use such a timestamp to create the versions and count on the
 LDES Server to ignore duplicate version objects. When we use polling we typically will create
 versions ourselves based on some timestamp property.
 
-Now, in case we have a pipeline accepting data (i.e. the source system pushes messages) there are
+Now, in case we have a pipeline accepting data (i.e. the source system pushes messages), there are
 two options. If the source system only pushes changes, we can leave the version object creating to
-the LDES Server or we create versions in the workbench pipeline (typically right before outputting
+the LDES Server, or we create versions in the workbench pipeline (typically right before outputting
 to the LDES Server) based on some date/time property or the current time. However, if the source
-system pushes the current state of its models and not the changes, then we use a update or
+system pushes the current state of its models and not the changes, then we use an update or
 modification timestamp in the model to create our version objects in the pipeline and send those to
 the LDES Server.
 

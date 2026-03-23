@@ -68,6 +68,6 @@ outputs:
   - name: Ldio:ConsoleOut
   - name: Ldio:HttpOut
     config:
-      endpoint: http://localhost/occupancy-pipeline
+      endpoint: http://localhost:8080/occupancy-pipeline
       rdf-writer:
         content-type: application/n-triples
