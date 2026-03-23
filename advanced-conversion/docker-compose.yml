@@ -49,7 +49,7 @@ services:
     ports:
       - 9004:8080
     networks:
-      - advanced-conversion 
+      - advanced-conversion
     depends_on:
       ldes-server:
         condition: service_healthy

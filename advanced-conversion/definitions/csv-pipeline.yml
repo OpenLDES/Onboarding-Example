@@ -1,64 +1,86 @@
+# This is a pipeline for demonstrating CSV to linked data conversion using RML
 name: csv-pipeline
-description: "Polls for park-and-ride data in CSV format, converts to linked data & sends to our P&R pipeline."
+description: "Polls for CSV public parking occupancy data, converts to linked data, creates versions & sends to LDES server."
+
 input:
   name: Ldio:HttpInPoller
   config:
-    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/csv?lang=en&timezone=Europe%2FBrussels
-    cron: 0 */2 * * * *
+    url: "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/csv?lang=en&timezone=Europe%2FBrussels"
+    cron: "0 */2 * * * *"
   adapter:
     name: Ldio:RmlAdapter
     config:
       mapping: |
+        @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+        @prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
         @prefix rr:     <http://www.w3.org/ns/r2rml#> .
         @prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
         @prefix carml:  <http://carml.taxonic.com/carml/> .
+        @prefix :       <https://example.org/ns/tutorial/advanced-conversion#> .
         @prefix mv:     <http://schema.mobivoc.org/#> .
+        @prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
         @prefix temp:   <https://temp.org/ns/advanced-compose#> .
+        @prefix fnml:  <http://semweb.mmlab.be/ns/fnml#> .
+        @prefix grel:  <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+        @prefix fno:   <https://w3id.org/function/ontology#> .
+        
+        :TriplesMap a rr:TriplesMap ;
+        rml:logicalSource [
+          a rml:LogicalSource;
+          rml:source [ a carml:Stream ];
+          rml:referenceFormulation ql:CSV
+        ] ;
+        
+        rr:subjectMap [
+          rr:graphMap [ rr:template "{id}" ];
+          rml:reference "id";
+          rr:class mv:ParkingFacility
+        ] ;
+        
+        rr:predicateObjectMap [
+          rr:predicate temp:type;
+          rr:objectMap [ rml:reference "type" ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:name;
+          rr:objectMap [ rml:reference "name" ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:lastupdate;
+          rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:openingtimesdescription;
+          rr:objectMap [ rml:reference "openingtimesdescription" ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:operatorinformation;
+          rr:objectMap [ rml:reference "operatorinformation" ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:freeparking;
+          rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:totalcapacity;
+          rr:objectMap [ rml:reference "totalcapacity"; rr:datatype xsd:integer ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:availablecapacity;
+          rr:objectMap [ rml:reference "availablecapacity"; rr:datatype xsd:integer ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:occupancytrend;
+          rr:objectMap [ rml:reference "occupancytrend"; rr:datatype xsd:integer ]
+        ] ;
+        rr:predicateObjectMap [
+          rr:predicate temp:location ;
+          rr:objectMap [ rml:reference "location" ]
+        ] .
 
-        temp:TriplesMap a rr:TriplesMap;
-          rml:logicalSource [
-            a rml:LogicalSource;
-            rml:source [ a carml:Stream ];
-            rml:referenceFormulation ql:CSV
-          ];
-          rr:subjectMap [
-            rr:graphMap [ rr:template "{urllinkaddress}" ];
-            rml:reference "urllinkaddress";
-            rr:class mv:ParkingLot
-          ];
-          rr:predicateObjectMap [
-            rr:predicate temp:name;
-            rr:objectMap [ rml:reference "name" ]
-          ],[
-            rr:predicate temp:lastupdate;
-            rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
-          ], [
-            rr:predicate temp:openingtimesdescription;
-            rr:objectMap [ rml:reference "openingtimesdescription" ]
-          ], [
-            rr:predicate temp:operatorinformation;
-            rr:objectMap [ rml:reference "operatorinformation" ]
-          ], [
-            rr:predicate temp:freeparking;
-            rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:numberofspaces;
-            rr:objectMap [ rml:reference "numberofspaces"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:availablespaces;
-            rr:objectMap [ rml:reference "availablespaces"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:occupation;
-            rr:objectMap [ rml:reference "occupation"; rr:datatype xsd:integer ]
-          ], [
-            rr:predicate temp:latitude;
-            rr:objectMap [ rml:reference "latitude"; rr:datatype xsd:double ]
-          ], [
-            rr:predicate temp:longitude;
-            rr:objectMap [ rml:reference "longitude"; rr:datatype xsd:double ]
-          ].
 outputs:
+  - name: Ldio:ConsoleOut
   - name: Ldio:HttpOut
     config:
       endpoint: http://localhost/occupancy-pipeline

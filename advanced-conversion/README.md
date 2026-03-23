@@ -18,8 +18,8 @@ string (which we have changed to reflect our tutorial).
 
 The workbench is where we need to change a few things: we'll need to transform our custom model to
 the standard vocabulary. To make it a bit more interesting, we'll start from an actual real-time
-message which contains more than one state object. In fact, we'll be checking for changes on a
-regular basis. Now we have a real linked data event stream!
+message which contains more than one state object. In fact, we'll be checking for changes regularly.
+Now we have a real linked data event stream!
 
 ## Towards a More Advanced Model
 
@@ -27,10 +27,10 @@ As mentioned above, we'll be using an open vocabulary standard to describe our m
 to attach real semantic meaning to it and create interoperability with other Data Publishers that
 use the same vocabulary.
 
-Understanding and mapping
-our [source model](https://data.stad.gent/explore/dataset/real-time-bezetting-pr-gent/information/) (
-check out the dataset schema) to
-the [target model](https://raw.githubusercontent.com/vocol/mobivoc/develop/diagrams/mobivoc_v1.1.4.png)
+Understanding and mapping our
+[source model](https://data.stad.gent/explore/dataset/bezetting-parkeergarages-real-time/information/)
+(check out the dataset schema) to the
+[target model](https://raw.githubusercontent.com/vocol/mobivoc/develop/diagrams/mobivoc_v1.1.4.png)
 is the hard part, in particular if we are missing descriptions for the model structure and its
 properties. Lucky for us, most of the property names are more-or-less self-explanatory.
 
@@ -38,32 +38,38 @@ properties. Lucky for us, most of the property names are more-or-less self-expla
 |-------------------------|-----------------------------------------------------------------------------|
 | name                    | descriptive name                                                            |
 | lastupdate              | timestamp when last updated                                                 |
-| type                    | type of parking facility, always `offStreetParkingGround`                   |
+| type                    | type of parking facility, `offStreetParkingGround` or `carPark`             |
+| description             | description                                                                 |
+| id                      | the id of the parking, in URI format                                        |
 | openingtimesdescription | description of opening times                                                |
 | isopennow               | is parking currently open? specified as boolean: yes = 1, no = 0            |
 | temporaryclosed         | is parking temporary closed? (boolean)                                      |
 | operatorinformation     | description of company operating the parking                                |
 | freeparking             | is parking freely accessable? (boolean)                                     |
 | urllinkaddress          | webpage URL of the parking offering more information                        |
-| numberofspaces          | total number of spaces (capacity)                                           |
-| availablespaces         | available number of spaces                                                  |
+| totalcapacity           | total number of spaces (capacity)                                           |
+| availablecapacity       | available number of spaces                                                  |
 | occupancytrend          | ?                                                                           |
 | occupation              | amount of occupied spaces expressed as a rounded percentage of the capacity |
-| latitude                | north-south position of the parking                                         |
-| longitude               | east-west position of the parking                                           |
-| location.lon            | same as longitude but expressed as a number                                 |
-| location.lat            | same as latitude but expressed as a number                                  |
-| gentse_feesten          | ?                                                                           |
+| location                | geo point position of the parking                                           |
+| locationanddimension    | JSON object with information of the parking                                 |
+| categorie               | inside or outside low emmission zone (LEZ)                                  |
+| dashboard               | ?                                                                           |
 
 As you can see, except for a few, we have a pretty good idea of the meaning of the properties.
-Obviously we should double-check our assumptions with the publisher of this data. For this tutorial,
-we'll assume that the meaning is correct and that we can ignore the few unclear properties. So,
-let's continue by looking into how these properties map onto the Mobivoc model.
+Obviously, we should double-check our assumptions with the publisher of this data. For this
+tutorial, we'll assume that the meaning is correct and that we can ignore the few unclear
+properties. So, let's continue by looking into how these properties map onto the Mobivoc model.
 
-Looking at the Mobivoc model we notice a central entity named _parking facility_. It derives from a
-_civic structure_ inheriting its properties. We can also see that there is an entity _parking lot_
-derived from a _parking facility_ and is essentially the same as our offstreet parking ground.
-Following the _civic structure_ relations we see that it can have a _capacity_ and a _real time
+Looking at the
+[Mobivoc model](https://github.com/vocol/mobivoc/blob/develop/diagrams/mobivoc_v1.1.4.ttl) we
+notice a central entity named _parking facility_. It derives from a _civic structure_ inheriting its
+properties. We can also see that there is an entity _parking lot_ derived from a _parking facility_
+and is essentially the same as our offstreet parking ground. And there's also an entity _parking
+garage_ which is a _parking facility_ that is used for a carPark. We map the specific types, which
+is represented by the `type` column in the dataset, to `mv.ParkingLot` or `mv.ParkingGarage`.
+
+Following the _civic structure_ relations, we see that it can have a _capacity_ and a _real time
 capacity_ (derived from _capacity_). Exactly what we need! Furthermore, a _capacity_ is valid for a
 vehicle type, a _civic structure_ has an _opening hours specification_ and is operated by an
 _organization_. Let's create a mapping from our source model to the target model based on this
@@ -76,49 +82,48 @@ knowledge.
 |---------------------------------|--------------------------------------------------------------------------------------------------|
 | name _value_                    | rdfs:label _value_                                                                               |
 | lastupdate _value_              | dct:modified _value_                                                                             |
-| type offStreetParkingGround     | rdf:type mv:ParkingLot                                                                           |
+| type _value_                    | rdf:type `mv:ParkingLot` or `mv:ParkingGarage`                                                   |
+| description _value_             | rdfs:comment _value_                                                                             |
 | openingtimesdescription _value_ | schema:openingHoursSpecification [rdf:type schema:OpeningHoursSpecification; rdfs:label _value_] |
 | isopennow _value_               | _N/A_                                                                                            |
 | temporaryclosed _value_         | _N/A_                                                                                            |
 | operatorinformation _value_     | mv:operatedBy [rdf:type schema:Organization, dct:Agent; rdfs:label _value_]                      |
 | freeparking _value_             | mv:price [rdf:type schema:PriceSpecification; mv:freeOfCharge _value_]                           |
 | urllinkaddress _value_          | mv:url _value_                                                                                   |
-| numberofspaces _value_          | mv:capacity [rdf:type mv:Capacity; mv:totalCapacity _value_]                                     |
-| availablespaces _value_         | mv:capacity [rdf:type mv:RealTimeCapacity; mv:currentValue _value_]                              |
-| occupancytrend _value_          | _N/A_                                                                                            |
+| totalcapacity _value_           | mv:capacity [rdf:type mv:Capacity; mv:totalCapacity _value_]                                     |
+| availablecapacity _value_       | mv:capacity [rdf:type mv:RealTimeCapacity; mv:currentValue _value_]                              |
 | occupation _value_              | mv:rateOfOccupancy _value_                                                                       |
-| latitude _value_                | geo:lat _value_                                                                                  |
-| longitude _value_               | geo:long _value_                                                                                 |
-| location.lon                    | _N/A_                                                                                            |
-| location.lat                    | _N/A_                                                                                            |
-| gentse_feesten _value_          | _N/A_                                                                                            |
+| location _value_                | geo:point _value_                                                                                |
+| locationanddimension _value_    | _N/A_                                                                                            |
+| categorie _value_               | _N/A_                                                                                            |
+| dashboard _value_               | _N/A_                                                                                            |
 
 > **Note** that we mark some mappings as not applicable (_N/A_) because we cannot map a property, we
-> do not known the exact meaning of the property or we do not need it (e.g. duplicates).
+> do not know the exact meaning of the property, or we do not need it (e.g. duplicates).
 
 Great! We have determined what will be mapped and how. We're done. Well, not quite. There is one
-more thing we need: an identity for our entity. It has to be an URI and obviously it needs to be
-unique. In addition, for every update of the available spaces the identity should remain the same (
-duh!). So, what do we use for the identity? One possible option is to take the `urllinkaddress`
-value. It would work as long as the Data Owner does not decide to relocate it. Best option is to
-check with the Data Owner but for this tutorial we'll continue on the assumption that the
-`urllinkaddress` will not change.
+more thing we need: an identity for our entity. It has to be a URI, and obviously it needs to be
+unique. In addition, for every update of the available spaces, the identity should remain the same (
+duh!). So, what do we use for the identity? One possible option is to take the `id`
+value. It would work as long as the Data Owner does not decide to relocate it. The best option is to
+check with the Data Owner, but for this tutorial we'll continue on the assumption that the
+`id` will not change.
 
 ## To Push or To Pull, That's the Question
 
-As mention above, to make it more interesting we will be retrieving the number of available spaces
-in our parking lots on a regular interval. To do so we can use a component that can poll one or more
-URLs using HTTP. To do so, we need to replace the `LdioHttpIn` component (push model) that listens
-for incoming HTTP requests by a `LdioHttpInPoller` component (pull model).
+As mentioned above, to make it more interesting, we will be retrieving the number of available
+spaces in our parking lots at a regular interval. To do so, we can use a component that can poll one
+or more URLs using HTTP. To do so, we need to replace the `LdioHttpIn` component (push model) that
+listens for incoming HTTP requests by a `LdioHttpInPoller` component (pull model).
 
-For example, to poll our source URL every two minutes we need to configure our pipeline input as:
+For example, to poll our source URL every two minutes, we need to configure our pipeline input as:
 
 ```yaml
 input:
   name: Ldio:HttpInPoller
   config:
-    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/csv?lang=en&timezone=Europe%2FBrussels
-    cron: 0 */2 * * * *
+    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/csv?lang=en&timezone=Europe%2FBrussels
+    cron: "0 */2 * * * *"
 ```
 
 This will ensure we receive the actual state of our parking lots at regular time intervals (e.g.
@@ -131,8 +136,8 @@ Now that we can get the actual state of our parking lots, we need to convert the
 semicolon (`;`) separated CSV format to the linked data models we defined in the mapping. For this
 we can use a technology called [RDF Mapping Language](https://rml.io) (RML). There are various ways
 to produce the mapping that we need: directly using linked data which defines
-the [RML mapping rules](https://rml.io/specs/rml/) or indirectly using a more human readable way
-named [Yarrrml](https://rml.io/yarrrml/). Personally I prefer the real thing but
+the [RML mapping rules](https://rml.io/specs/rml/) or indirectly using a more human-readable way
+named [Yarrrml](https://rml.io/yarrrml/). Personally I prefer the real thing, but
 using [Matey](https://rml.io/yarrrml/matey/) may be more your thing.
 
 Explaining the RML technology is beyond the scope of this tutorial. The technology allows us to
@@ -143,28 +148,28 @@ one-to-one into an intermediate linked data model and then transform this interm
 our final model using another RDF technology (SPARQL construct), which is way easier to use for
 creating complex structures. We'll do this in the next section.
 
-We start by creating a simple intermediate model where we already set the correct identity and
-entity type but map everything else as-is onto an intermediate vocabulary (`temp:` or
-`https://temp.org/ns/advanced-compose#` in full).
+We start by creating a simple intermediate model and everything else as-is onto an intermediate
+vocabulary (`temp:` or `https://temp.org/ns/advanced-compose#` in full).
 
-| source                          | intermediate                         |
-|---------------------------------|--------------------------------------|
-| name _value_                    | temp:name _value_                    |
-| lastupdate _value_              | temp:lastupdate _value_              |
-| type offStreetParkingGround     | rdf:type mv:ParkingLot               |
-| openingtimesdescription _value_ | temp:openingtimesdescription _value_ |
-| operatorinformation _value_     | temp:operatorinformation _value_     |
-| freeparking _value_             | temp:freeparking _value_             |
-| urllinkaddress _id_             | _id_                                 |
-| numberofspaces _value_          | temp:numberofspaces _value_          |
-| availablespaces _value_         | temp:availablespaces _value_         |
-| occupation _value_              | temp:occupation _value_              |
-| latitude _value_                | temp:latitude _value_                |
-| longitude _value_               | temp:longitude _value_               |
+| source                          | intermediate                                    |
+|---------------------------------|-------------------------------------------------|
+| id _id_                         | _id_                                            |
+| type _value_                    | temp:type `carPark` or `offStreetParkingGround` |
+| name _value_                    | temp:name _value_                               |
+| lastupdate _value_              | temp:lastupdate _value_                         |
+| type _value_                    | rdf:type mv:ParkingLot                          |
+| openingtimesdescription _value_ | temp:openingtimesdescription _value_            |
+| operatorinformation _value_     | temp:operatorinformation _value_                |
+| freeparking _value_             | temp:freeparking _value_                        |
+| urllinkaddress _value_          | temp:urllinkaddress _value_                     |
+| totalcapacity _value_           | temp:totalcapacity _value_                      |
+| availablecapacity _value_       | temp:availablecapacity _value_                  |
+| occupation _value_              | temp:occupation _value_                         |
+| location _value_                | temp:location _value_                           |
 
 To create a RML mapping file we need to write the RML rules
 in [Turtle](https://www.w3.org/TR/turtle/). All the Turtle prefixes should go at the start of the
-file but for simplicity we'll add the prefixes as we go. Let's start with the most common ones:
+file, but for simplicity we'll add the prefixes as we go. Let's start with the most common ones:
 
 ```text
 @prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
@@ -176,34 +181,43 @@ file but for simplicity we'll add the prefixes as we go. Let's start with the mo
 > **Note** that the last one is always needed for our RML adapter component (`RmlAdaptor`).
 
 Now, we start by defining the map which will contain our mapping rules. We define a prefix for our
-map and rules (`:`) and tell the RML component that we will be mapping CSV messages. Do not forget
+map and rules (`:`) and tell the RML component that we will be mapping CSV messages. Don't forget
 that all prefixes go at the start before our mapping and rules.
+
+```text
+@prefix :       <https://example.org/ns/tutorial/advanced-conversion#> .
+
+:TriplesMap a rr:TriplesMap ;
+rml:logicalSource [
+ a rml:LogicalSource;
+ rml:source [ a carml:Stream ];
+ rml:referenceFormulation ql:CSV
+] ;
+```
+
+Let's continue now with defining the identity and type of our parking lots. Remember that for the
+identity we use the `id` and for the type we use _parking facility_.
+At the same time we'll also add each _parking facility_ in its own graph.
+Say what? We'll learn about triples and graphs a bit later. For now, remember that we want to
+handle each _parking lot_ or _parking garage_ separately, so we instruct the RML component to
+generate a stream of `mv:ParkingFacilities` entities, one for each row in the CSV.
+We also map the `type` column in the CSV to the `temp:type` property of the entity, so it will
+contain `carPark` or `offStreetParkingGround`. We'll map them in a later stage to the correct
+ontology class.
 
 ```text
 @prefix temp:   <https://temp.org/ns/advanced-compose#> .
 
-temp:TriplesMap a rr:TriplesMap;
-  rml:logicalSource [
-    a rml:LogicalSource;
-    rml:source [ a carml:Stream ];
-    rml:referenceFormulation ql:CSV
-  ].
-```
+rr:subjectMap [
+ rr:graphMap [ rr:template "{id}" ];
+ rml:reference "id";
+ rr:class mv:ParkingFacility
+] ;
 
-Let's continue now with defining the identity and type of our parking lots. Remember that for the
-identity we use the URL value and for the type we use _parking lot_. At the same time we'll also add
-each _parking lot_ in its own graph. Say what? We'll learn about triples and graphs a bit later. For
-now, just remember that we want to handle each _parking lot_  separately so we instruct the RML
-component to generate a stream of `mv:ParkingLot` entities, one for each row in the CSV.
-
-```text
-@prefix mv:     <http://schema.mobivoc.org/#> .
-
-temp:TriplesMap rr:subjectMap [
-  rr:graphMap [ rr:template "{urllinkaddress}" ];
-  rml:reference "urllinkaddress";
-  rr:class mv:ParkingLot
-].
+rr:predicateObjectMap [
+ rr:predicate temp:type;
+ rr:objectMap [ rml:reference "type" ]
+] ;
 ```
 
 Easy enough. No? Let's continue with one property. We define a rule saying that the entity will have
@@ -223,34 +237,34 @@ intermediate property. However, to make our life a bit easier in the next step, 
 intermediate to the target model, we can already add the correct value types.
 
 ```text
-temp:TriplesMap rr:predicateObjectMap [
-  rr:predicate temp:lastupdate;
-  rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
-], [
-  rr:predicate temp:openingtimesdescription;
-  rr:objectMap [ rml:reference "openingtimesdescription" ]
-], [
-  rr:predicate temp:operatorinformation;
-  rr:objectMap [ rml:reference "operatorinformation" ]
-], [
-  rr:predicate temp:freeparking;
-  rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
-], [
-  rr:predicate temp:numberofspaces;
-  rr:objectMap [ rml:reference "numberofspaces"; rr:datatype xsd:integer ]
-], [
-  rr:predicate temp:availablespaces;
-  rr:objectMap [ rml:reference "availablespaces"; rr:datatype xsd:integer ]
-], [
-  rr:predicate temp:occupation;
-  rr:objectMap [ rml:reference "occupation"; rr:datatype xsd:integer ]
-], [
-  rr:predicate temp:latitude;
-  rr:objectMap [ rml:reference "latitude"; rr:datatype xsd:double ]
-], [
-  rr:predicate temp:longitude;
-  rr:objectMap [ rml:reference "longitude"; rr:datatype xsd:double ]
-].
+rr:predicateObjectMap [
+ rr:predicate temp:lastupdate;
+ rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:openingtimesdescription;
+ rr:objectMap [ rml:reference "openingtimesdescription" ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:operatorinformation;
+ rr:objectMap [ rml:reference "operatorinformation" ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:freeparking;
+ rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:totalcapacity;
+ rr:objectMap [ rml:reference "totalcapacity"; rr:datatype xsd:integer ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:availablecapacity;
+ rr:objectMap [ rml:reference "availablecapacity"; rr:datatype xsd:integer ]
+] ;
+rr:predicateObjectMap [
+ rr:predicate temp:location ;
+ rr:objectMap [ rml:reference "location" ]
+] .
 ```
 
 All of the above results in a mapping which we simply embed in our pipeline. So, we change our
@@ -264,7 +278,7 @@ description: "Polls for park-and-ride data in CSV format, converts to linked dat
 input:
   name: Ldio:HttpInPoller
   config:
-    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/csv?lang=en&timezone=Europe%2FBrussels
+    url: https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/csv?lang=en&timezone=Europe%2FBrussels
     cron: 0 */2 * * * *
   adapter:
     name: Ldio:RmlAdapter
@@ -277,21 +291,23 @@ input:
         @prefix mv:     <http://schema.mobivoc.org/#> .
         @prefix temp:   <https://temp.org/ns/advanced-compose#> .
 
-        temp:TriplesMap a rr:TriplesMap;
+        :TriplesMap a rr:TriplesMap;
         ...
 ```
 
 > **Note** that we have actually split the workbench pipeline in two parts: a first pipeline that
-> polls for the park & ride data, converts it to linked data (temporary format) using RML and send it
-> to a second pipeline which then converts it to the standard model, creates a version object (
-> see [later](#time-is-like-a-clock-in-my-heart)) and sends that to the LDES Server. The reason we
-> have split the pipeline is to show you polling for alternative data formats and handle these.
+> polls for the parking garages occupancy data, converts it to linked data (temporary format) using
+> RML and send it to a second pipeline which then converts it to the standard model, creates a
+> version object (see [later](#time-is-like-a-clock-in-my-heart)) and sends that to the LDES Server.
+> The reason we have split the pipeline is to show you polling for alternative data formats and
+> handle
+> these.
 
 ## Pirates Take Anything They Can
 
 We could have also requested the data
-as [JSON]( https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/json?lang=en&timezone=Europe%2FBrussels)
-or [GeoJSON](https://data.stad.gent/api/explore/v2.1/catalog/datasets/real-time-bezetting-pr-gent/exports/geojson?lang=en&timezone=Europe%2FBrussels).
+as [JSON]( https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/json?lang=en&timezone=Europe%2FBrussels)
+or [GeoJSON](https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/geojson?lang=en&timezone=Europe%2FBrussels).
 It is as simple as using a different URL. Of course, the mapping in RML is a bit different for these
 as the formats and model structures are different. You can verify [later](#whats-on-the-menu) that
 these data formats can also be used.
@@ -344,26 +360,25 @@ our intermediate model and [construct](https://www.w3.org/TR/rdf-sparql-query/#c
 model.
 
 If we look at our intermediate model and the target model we see that we need to keep the identity
-and type of our parking lot, convert the other properties to a different namespace and for some
+of our parking lot, convert the type and other properties to a different namespace and for some
 properties introduce the required structure:
 
-| intermediate                         | target                                                                                           |
-|--------------------------------------|--------------------------------------------------------------------------------------------------|
-| temp:name _value_                    | rdfs:label _value_                                                                               |
-| temp:lastupdate _value_              | dct:modified _value_                                                                             |
-| rdf:type mv:ParkingLot               | _as-is_                                                                                          |
-| temp:openingtimesdescription _value_ | schema:openingHoursSpecification [rdf:type schema:OpeningHoursSpecification; rdfs:label _value_] |
-| temp:operatorinformation _value_     | mv:operatedBy [rdf:type schema:Organization, dct:Agent; rdfs:label _value_]                      |
-| temp:freeparking _value_             | mv:price [rdf:type schema:PriceSpecification; mv:freeOfCharge _value_ ]                          |
-| _id_                                 | mv:url _id_                                                                                      |
-| temp:numberofspaces _value_          | mv:capacity [rdf:type mv:Capacity; mv:totalCapacity _value_]                                     |
-| temp:availablespaces _value_         | mv:capacity [rdf:type mv:RealTimeCapacity; mv:currentValue _value_]                              |
-| temp:occupation _value_              | mv:rateOfOccupancy _value_                                                                       |
-| temp:latitude _value_                | geo:lat _value_                                                                                  |
-| temp:longitude _value_               | geo:long _value_                                                                                 |
+| intermediate                                    | target                                                                                           |
+|-------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| temp:type 'carPark' or 'offStreetParkingGround' | rdf:type `mv:ParkingLot` or `mv:ParkingGarage`                                                   |
+| temp:name _value_                               | rdfs:label _value_                                                                               |
+| temp:lastupdate _value_                         | dct:modified _value_                                                                             |
+| temp:openingtimesdescription _value_            | schema:openingHoursSpecification [rdf:type schema:OpeningHoursSpecification; rdfs:label _value_] |
+| temp:operatorinformation _value_                | mv:operatedBy [rdf:type schema:Organization, dct:Agent; rdfs:label _value_]                      |
+| temp:freeparking _value_                        | mv:price [rdf:type schema:PriceSpecification; mv:freeOfCharge _value_ ]                          |
+| _id_                                            | mv:url _id_                                                                                      |
+| temp:totalcapacity _value_                      | mv:capacity [rdf:type mv:Capacity; mv:totalCapacity _value_]                                     |
+| temp:availablecapacity _value_                  | mv:capacity [rdf:type mv:RealTimeCapacity; mv:currentValue _value_]                              |
+| temp:location _value_                           | geo:lat _value_                                                                                  |
+| temp:location _value_                           | geo:long _value_                                                                                 |
 
-So, let's start with the an empty SPARQL construct query (which is similar to a SPARQL query but the
-result is a new RDF model not just some values). Again, we use Turtle to do this:
+So, let's start with an empty SPARQL construct query (which is similar to a SPARQL query, but the
+result is a new RDF model, not just some values). Again, we use Turtle to do this:
 
 ```text
 # TODO: add our prefixes here
@@ -374,16 +389,19 @@ CONSTRUCT {
 }
 ```
 
+> **Tip** you can test SPARQL CONSTRUCT and SPARQL SELECT queries in
+> the [SPARQL Playground](https://atomgraph.github.io/SPARQL-Playground/)
+
 Not too difficult to understand: in, the `where` part we select values from the intermediate model
 and put them in variables. We then use those variables to create the target model in the `construct`
 part.
 
 > **Note** that the casing of the words `construct` and `where` is not important.
 
-Let's take a brief moment and look at the intermediate model. It is now linked data so we can look
-at this model as being a collection of id-property-value triples, where the id is the id of eack
-parking lot, the properties being the names in our `temp:` namespace and the values being values,
-obviously. In linked data we call this a `triple`. The `S` stands for `subject` (the identity of a
+Let's take a brief moment and look at the intermediate model. It is now linked data, so we can look
+at this model as being a collection of id-property-value triples, where the id is the id of each
+parking lot, the properties being the names in our `temp:` namespace and the values being values.
+In linked data we call this a `triple`. The `S` stands for `subject` (the identity of a
 thing), the `P` stands for `predicate` (a property identified by its unique full name, including the
 namespace) and the `O` stands for `object` (the value which can be literal or a reference to some
 other subject, with or without an actual identity). Conceptually, a triple is a way to represent a
@@ -391,7 +409,8 @@ unidirectional, named relation between a subject and an object.
 
 In linked data we also define the concept of a `graph`, which is just a tag for a triple and as such
 basically a way of grouping a bunch of triples together. It has no implicit meaning. A graph can be
-named by having an URI which identifies it. There's also one special unnamed graph (has no URI)which
+named by having a URI which identifies it. There's also one special unnamed graph (has no URI),
+which
 we call the default graph. When we add a graph part to a triple (`SPO`) we get a `quad` (`SPOG`). In
 fact, triples are just a special case of quads where the 4th component is the default graph. We can
 use graphs for many purposes, e.g. to identify the source of the triples, to group together all
@@ -402,26 +421,26 @@ Wow, let's think about this for a moment: in linked data we model everything as 
 subject-predicate-object) triples. It allows us to look at SPARQL queries as being filters that
 select a subset of the triple collection. For example, if we need to select all the identities of
 our parking lots we can simply state that we look for all the triples for which the predicate is
-`rdf:type` and the object is `mv:ParkingLot`. The subjects of these triples are in fact what we
+`rdf:type` and the object is `mv:ParkingFacility`. The subjects of these triples are in fact what we
 search for: the identities. To express this in a SPARQL query we specify this as follows:
 
 ```text
-?id <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.mobivoc.org/#ParkingLot>
+?id <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.mobivoc.org/#ParkingFacility>
 ```
 
 The interesting part is the variable `?id`. It represents each result in our query.
 
-To make it more readable and in order to not repeat the namespace in every subject, predicate and
-object, we can again use prefixes:
+To make it more readable and to not repeat the namespace in every subject, predicate and object, we
+can again use prefixes:
 
 ```text
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:  <http://schema.mobivoc.org/#>
 
-?id rdf:type mv:ParkingLot
+?id rdf:type mv:ParkingFacility
 ```
 
-> **Note** that the syntax for our prefix definitions is slightly different than for the Turtle
+> **Note** that the syntax for our prefix definitions is slightly different from for the Turtle
 > files: we use `PREFIX` instead of `@prefix` and there is no dot (`.`) at the end of the line.
 
 The full SPARQL query would be:
@@ -430,10 +449,10 @@ The full SPARQL query would be:
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:  <http://schema.mobivoc.org/#>
 
-SELECT ?id WHERE { ?id rdf:type mv:ParkingLot }
+SELECT ?id WHERE { ?id rdf:type mv:ParkingFacility }
 ```
 
-But we do not need the identities only. Instead we want to create a new collection of triples for
+But we do not need the identities only. Instead, we want to create a new collection of triples for
 each parking lot with the predicates changed to those needed by our target model. Let's start with
 simply copying the triple that defines our parking lots and their update timestamp:
 
@@ -444,26 +463,58 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX temp: <https://temp.org/ns/advanced-compose#>
 
 CONSTRUCT {
-  ?id a mv:ParkingLot .
+  ?id a mv:ParkingFacility .
   ?id dct:modified ?lastupdate .
 } WHERE {
-  ?id rdf:type mv:ParkingLot .
+  VALUES ?type {
+    
+  }
+  ?id rdf:type mv:ParkingFacility .
   ?id temp:lastupdate ?lastupdate .
 }
 ```
 
 > **Note** that `a` is a short-hand notation of `rdf:type`.
 
-In the `where` part we look for each `?id` which is a `mv:ParkingLot` and then we retrieve its value
+In the `where` part we look for each `?id` which is a `mv:ParkingFacility` and then we retrieve its
+value
 of `temp:lastupdate` as variable `?lastupdate`. Now that we have found these we can use the
 variables to create a new set of triples listed under the `construct` part. Not too difficult, is
 it?
+
+Now, all new entities are of type `mv:ParkingFacility`, which is a more abstract type for a
+`mv:ParkingLot` or `mv:ParkingGarage`. However, we used `temp:type` to contain the original type (
+`carPark` or `offStreetParkingGround`). We can now map those types to the target types, which are
+not simple text values, but URI's to the right type. We do this mapping by using the `VALUES`
+keyword:
+
+```text
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX mv:   <http://schema.mobivoc.org/#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX temp: <https://temp.org/ns/advanced-compose#>
+PREFIX dct: <http://purl.org/dc/terms/>
+
+CONSTRUCT {
+  ?id a ?mappedtype ;
+      dct:modified ?lastupdate .
+} WHERE {
+  ?id rdf:type mv:ParkingFacility ;
+      temp:lastupdate ?lastupdate ;
+      temp:type ?temptype .
+
+   VALUES (?temptype ?mappedtype) {
+    ( "offStreetParkingGround" mv:ParkingLot )
+    ( "carPark" mv:ParkingGarage )
+   }
+}
+```
 
 Our target model is a bit more structured that our intermediate model, so at times we need to
 introduce an intermediate relation to some structure. Take for example the capacity. In
 the [model diagram](https://raw.githubusercontent.com/vocol/mobivoc/develop/diagrams/mobivoc_v1.1.4.png),
 we see that a _civic structure_ has a relation _has capacity_ to a _Capacity_ object that has a
-property _total capacity_. In linked data we model this as triples in this way:
+property _total capacity_. In linked data, we model this as triples in this way:
 
 ```
 <civic-structure-id> rdf:type schema:CivicStructure .
@@ -520,12 +571,13 @@ transformers:
 > the properties from our source model that almost all of these query lines are wrapped by an
 `optional { ... }` construct. The reason for this is that any of these triples may be missing.
 > Remember that the `WHERE` clause is in essence a filter on the collection of source triples, where
-> each query line refines the subset of results from the previous query line. Therefore, if we do not
-> use `optional` then the query returns no results and hence no target entity is constructed.
+> each query line refines the subset of results from the previous query line. Therefore, if we do
+> not use `optional` then the query returns no results and hence no target entity is constructed.
 
 ## Time Is Like a Clock in My Heart
 
-If you looked closely at the [Park & Ride pipeline](./definitions/occupancy-pipeline.yml) you may
+If you looked closely at
+the [parking garages occupancy pipeline](./definitions/occupancy-pipeline.yml) you may
 have noticed that we also added a component to create version objects ourselves:
 
 ```yaml
@@ -543,17 +595,17 @@ examples ([Setting up a minimal LDES Server](./minimal-server/README.md), [Setti
 and [Publishing a simple data set with a basic setup](./basic-setup/README.md)) we let the LDES
 Server handle this for us by providing a flag (`ldes:createVersions true ;`) in the LDES definition.
 So, why did we now add this component? And why did we not need to do that in the previous examples?
-Well, it turns out that there are pros and cons to both approaches and sometimes we have to choose
+Well, it turns out that there are pros and cons to both approaches, and sometimes we have to choose
 one or the other by necessity. But first, a bit of theory!
 
-If you look at the state of a software system, you will see that it consists of data modelled in a
-particular way dependant on its domain. This state changes over time when humans or other systems
-interact with it. Many times we only care about the latest state of such a system but sometimes we
-need to know the subsequent changes of the models in a system. We use this in order to be able to
+If you look at the state of a software system, you will see that it consists of data modeled in a
+particular way dependent on its domain. This state changes over time when humans or other systems
+interact with it. Many times we only care about the latest state of such a system, but sometimes we
+need to know the subsequent changes of the models in a system. We use this to be able to
 take decisions or calculate values based on the history of the individual model changes, e.g. your
 bank account balance, the level of water in a river, etc. Systems that need to keep the history of
 changes will typically store the event that lead to a model change as well as the (partial or full)
-model state in a append-only way (Event Streaming).
+model state in an append-only way (Event Streaming).
 
 A Linked Data Event Stream (LDES) is actually very similar: it allows us to store all the model
 states changes that happen in a (source) system as linked data using a LDES Server and offers a way
@@ -575,7 +627,7 @@ Actually, when you define a LDES you provide two properties: a `ldes:timestampPa
   ldes:versionOfPath dcterms:isVersionOf .
 ```
 
-The `ldes:versionOfPath` provides the property that is used to refer from the version object (i.e.
+The `ldes:versionOfPath` provides the property used to refer from the version object (i.e.
 historical object, point-in-time object) to the state object it is derived from and the
 `ldes:timestampPath` defines the property holding the date/time value for the point-in-time.
 Typically we respectively use [`dcterms:isVersionOf`](http://purl.org/dc/terms/isVersionOf) and [
@@ -616,7 +668,8 @@ unneeded version objects, we need to do our own state change detection and creat
 ourselves.
 
 > **Note** that the LDES Server will verify for a version object if it has already received one with
-> the same ID. As a version object is considered *immutable*  (should not change!) it will *not* store
+> the same ID. As a version object is considered *immutable*  (should not change!) it will *not*
+> store
 > it again, but instead the LDES Server will log a warning and ignore the duplicate member (version
 > object).
 
@@ -783,7 +836,8 @@ PREFIX xsd:       <http://www.w3.org/2001/XMLSchema#>
 
 > **Note** that every two minutes the pipeline will request the latest state of our parking lots and
 > will create additional version objects. The identity of a member depends only on the `lastupdate`
-> property of our parking lot. If that did not change for a parking lot then the pipeline will create
+> property of our parking lot. If that did not change for a parking lot then the pipeline will
+> create
 > a version object with an identical identity as before. Any such version object will be refused by
 > the LDES server and a warning will be logged in the LDES server log. The new version objects are
 > added to the LDES and become new members.
