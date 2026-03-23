@@ -1,0 +1,56 @@
+networks:
+  openldes:
+    name: openldes-network
+
+services:
+  ldes-postgresdb:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PWD}
+    ports:
+      - 5432:5432
+    networks:
+      - openldes
+
+
+  ldes-server:
+    image: openldes/ldes-server:latest
+    environment:
+      - SIS_DATA=/tmp
+      - SERVER_SERVLET_CONTEXTPATH=/
+      - LDESSERVER_HOSTNAME=http://localhost:8080
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ldes-postgresdb:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PWD}
+      - SPRING_BATCH_JDBC_INITIALIZESCHEMA=always
+      - MANAGEMENT_TRACING_ENABLED=false
+#      - SPRING_TASK_SCHEDULING_POOL_SIZE=5
+#      - LDESSERVER_FRAGMENTATIONCRON=*/1 * * * * *
+#      - LDESSERVER_MAINTENANCECRON=-  # no retention / compaction / deletion
+    volumes:
+      - ./server/application.yml:/application.yml:ro
+    ports:
+      - 8080:8080
+    networks:
+      - openldes
+    depends_on:
+      - ldes-postgresdb
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldes-server:8080/actuator/health"]
+
+
+  ldio-workbench:
+    image: openldes/ldi-orchestrator:latest
+    volumes:
+      - ./workbench/application.yml:/ldio/application.yml:ro
+    ports:
+      - 8081:8080
+    networks:
+      - openldes
+    depends_on:
+      ldes-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://ldio-workbench:8080/actuator/health"]
