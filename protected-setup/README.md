@@ -132,7 +132,7 @@ a [Test Message Sink](https://github.com/OpenLDES/LDES-E2E-message-sink)):
 
 
   sink-system:
-    image: ghcr.io/<TODO>/test-message-sink:latest
+    image: ghcr.io/openldes/test-message-sink:latest
     ports:
       - 9007:80
     networks:

@@ -72,8 +72,7 @@ services:
 
 
   sink-system:
-    # TODO: change to OpenLDES test-message-sink when available
-    image: ghcr.io/informatievlaanderen/test-message-sink:latest
+    image: ghcr.io/openldes/test-message-sink:latest
     ports:
       - 9007:80
     networks:
