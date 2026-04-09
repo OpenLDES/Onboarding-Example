@@ -35,49 +35,36 @@ input:
         rr:subjectMap [
           rr:graphMap [ rr:template "{id}" ];
           rml:reference "id";
-          rr:class mv:ParkingLot
+          rr:class mv:ParkingFacility
         ] ;
-        
         rr:predicateObjectMap [
           rr:predicate temp:name;
           rr:objectMap [ rml:reference "name" ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:lastupdate;
           rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:openingtimesdescription;
           rr:objectMap [ rml:reference "openingtimesdescription" ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:operatorinformation;
           rr:objectMap [ rml:reference "operatorinformation" ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:freeparking;
           rr:objectMap [ rml:reference "freeparking"; rr:datatype xsd:integer ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:numberofspaces;
           rr:objectMap [ rml:reference "totalcapacity"; rr:datatype xsd:integer ]
         ] ;
-
         rr:predicateObjectMap [
           rr:predicate temp:availablespaces;
           rr:objectMap [ rml:reference "availablecapacity"; rr:datatype xsd:integer ]
         ] ;
-
-        rr:predicateObjectMap [
-          rr:predicate temp:occupation;
-          rr:objectMap [ rml:reference "occupancytrend"; rr:datatype xsd:integer ]
-        ] ;
-        
         rr:predicateObjectMap [
           rr:predicate temp:location ;
           rr:objectMap [ rml:reference "location" ]

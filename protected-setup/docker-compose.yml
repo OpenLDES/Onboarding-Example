@@ -47,11 +47,10 @@ services:
 
   server-workbench:
     image: openldes/ldi-orchestrator:latest
-    environment:
     ports:
       - 9004:8080
     networks:
-      - protected-setup-server 
+      - protected-setup-server
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://server-workbench:8080/actuator/health"]
     depends_on:
@@ -60,7 +59,6 @@ services:
 
   client-workbench:
     image: openldes/ldi-orchestrator:latest
-    environment:
     networks:
       - protected-setup-client
     ports:
@@ -74,9 +72,10 @@ services:
 
 
   sink-system:
+    # TODO: change to OpenLDES test-message-sink when available
     image: ghcr.io/informatievlaanderen/test-message-sink:latest
     ports:
-      - 9007:8080
+      - 9007:80
     networks:
       - protected-setup-client
     environment:

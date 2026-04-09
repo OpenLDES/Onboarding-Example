@@ -2,6 +2,5 @@
 @prefix dcterms:  <http://purl.org/dc/terms/> .
 
 [] a dcat:DataService ;
-  dcterms:title "Real time occupancy P+R (Gent) by page"@en ;
-  dcterms:description "Paged view for the occupancy of the various park+rides in Ghent in real time"@en .
-  
+  dcterms:title "Real time occupancy public parking occupancy data by page"@en ;
+  dcterms:description "Paged view for the occupancy of the various public parkings in Ghent in real time"@en .

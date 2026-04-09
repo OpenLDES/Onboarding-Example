@@ -171,7 +171,7 @@ To create a RML mapping file we need to write the RML rules
 in [Turtle](https://www.w3.org/TR/turtle/). All the Turtle prefixes should go at the start of the
 file, but for simplicity we'll add the prefixes as we go. Let's start with the most common ones:
 
-```text
+```Turtle
 @prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
 @prefix rr:     <http://www.w3.org/ns/r2rml#> .
 @prefix ql:     <http://semweb.mmlab.be/ns/ql#> .
@@ -184,7 +184,7 @@ Now, we start by defining the map which will contain our mapping rules. We defin
 map and rules (`:`) and tell the RML component that we will be mapping CSV messages. Don't forget
 that all prefixes go at the start before our mapping and rules.
 
-```text
+```Turtle
 @prefix :       <https://example.org/ns/tutorial/advanced-conversion#> .
 
 :TriplesMap a rr:TriplesMap ;
@@ -205,7 +205,7 @@ We also map the `type` column in the CSV to the `temp:type` property of the enti
 contain `carPark` or `offStreetParkingGround`. We'll map them in a later stage to the correct
 ontology class.
 
-```text
+```Turtle
 @prefix temp:   <https://temp.org/ns/advanced-compose#> .
 
 rr:subjectMap [
@@ -223,7 +223,7 @@ rr:predicateObjectMap [
 Easy enough. No? Let's continue with one property. We define a rule saying that the entity will have
 a property (predicate) named `temp:name` whose value (object) comes from the source property `name`.
 
-```text
+```Turtle
 temp:TriplesMap rr:predicateObjectMap [
   rr:predicate temp:name;
   rr:objectMap [ rml:reference "name" ]
@@ -236,7 +236,7 @@ Let's do the other properties as well. We define a rule to map each source prope
 intermediate property. However, to make our life a bit easier in the next step, where we convert the
 intermediate to the target model, we can already add the correct value types.
 
-```text
+```Turtle
 rr:predicateObjectMap [
  rr:predicate temp:lastupdate;
  rr:objectMap [ rml:reference "lastupdate"; rr:datatype xsd:dateTime ]
@@ -318,7 +318,7 @@ The [JSON mapping](./definitions/json-pipeline.yml#L11) is slightly different as
 RML component to use JSON instead of CSV and how to iterate the JSON objects (for CSV it simply
 iterates over the non-header lines). So, now our map for JSON looks as this:
 
-```text
+```Turtle
 temp:TriplesMap a rr:TriplesMap;
   rml:logicalSource [
     a rml:LogicalSource;
@@ -339,7 +339,7 @@ around `features` which contain a `geometry` and `properties` we can get away wi
 `geometry` as the `properties` also contain the `latitude` and `longitude` values. Basically we can
 iterate the elements in the `features` array and select the `properties`:
 
-```text
+```Turtle
 temp:TriplesMap a rr:TriplesMap;
   rml:logicalSource [
     a rml:LogicalSource;
@@ -380,7 +380,7 @@ properties introduce the required structure:
 So, let's start with an empty SPARQL construct query (which is similar to a SPARQL query, but the
 result is a new RDF model, not just some values). Again, we use Turtle to do this:
 
-```text
+```SPARQL
 # TODO: add our prefixes here
 CONSTRUCT {
   # TODO: add our target model here
@@ -424,7 +424,7 @@ our parking lots we can simply state that we look for all the triples for which 
 `rdf:type` and the object is `mv:ParkingFacility`. The subjects of these triples are in fact what we
 search for: the identities. To express this in a SPARQL query we specify this as follows:
 
-```text
+```Turtle
 ?id <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.mobivoc.org/#ParkingFacility>
 ```
 
@@ -433,7 +433,7 @@ The interesting part is the variable `?id`. It represents each result in our que
 To make it more readable and to not repeat the namespace in every subject, predicate and object, we
 can again use prefixes:
 
-```text
+```Turtle
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:  <http://schema.mobivoc.org/#>
 
@@ -445,7 +445,7 @@ PREFIX mv:  <http://schema.mobivoc.org/#>
 
 The full SPARQL query would be:
 
-```text
+```Turtle
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:  <http://schema.mobivoc.org/#>
 
@@ -456,7 +456,7 @@ But we do not need the identities only. Instead, we want to create a new collect
 each parking lot with the predicates changed to those needed by our target model. Let's start with
 simply copying the triple that defines our parking lots and their update timestamp:
 
-```text
+```Turtle
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:   <http://schema.mobivoc.org/#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -488,7 +488,7 @@ Now, all new entities are of type `mv:ParkingFacility`, which is a more abstract
 not simple text values, but URI's to the right type. We do this mapping by using the `VALUES`
 keyword:
 
-```text
+```Turtle
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX mv:   <http://schema.mobivoc.org/#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -620,7 +620,7 @@ changed. You need to wrap your head around these concepts, but once you do, it i
 Actually, when you define a LDES you provide two properties: a `ldes:timestampPath` and a
 `ldes:versionOfPath`, e.g.:
 
-```text
+```Turtle
 </occupancy> a ldes:EventStream ;
   ...
   ldes:timestampPath prov:generatedAtTime ;
@@ -773,7 +773,7 @@ curl "http://localhost:9003/ldes/occupancy/by-page?pageNumber=1"
 
 The last URL will contain our members, looking something like this (limited to one member):
 
-```text
+```Turtle
 PREFIX by-page:   <http://localhost:9003/ldes/occupancy/by-page/>
 PREFIX dcat:      <http://www.w3.org/ns/dcat#>
 PREFIX dct:       <http://purl.org/dc/terms/>

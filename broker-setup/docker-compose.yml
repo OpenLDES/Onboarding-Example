@@ -20,7 +20,7 @@ services:
 
 
   publisher-server:
-    image: ghcr.io/openldes/ldesserver:latest
+    image: ghcr.io/openldes/ldes-server:latest
     volumes:
       - ./publisher-server/application.yml:/application.yml:ro
     ports:
@@ -32,7 +32,7 @@ services:
       publisher-database:
         condition: service_healthy
     environment:
-      - LDESSERVER_HOSTNAME=http://publisher-server/ldes
+      - LDESSERVER_HOSTNAME=http://publisher-server:8080/ldes
       - SIS_DATA=/tmp
       - SERVER_SERVLET_CONTEXTPATH=/ldes
       - SPRING_DATASOURCE_URL=jdbc:postgresql://publisher-database:5432/${PUBLISHER_POSTGRES_DB}
@@ -50,13 +50,13 @@ services:
 
 
   publisher-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     volumes:
       - ./publisher-workbench/application.yml:/ldio/application.yml:ro
     ports:
       - 9004:8080
     networks:
-      - publisher-network 
+      - publisher-network
     depends_on:
       publisher-server:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
 
 
   broker-server:
-    image: ghcr.io/openldes/ldesserver:latest
+    image: ghcr.io/openldes/ldes-server:latest
     volumes:
       - ./broker-server/application.yml:/application.yml:ro
     ports:
@@ -109,7 +109,7 @@ services:
 
 
   broker-workbench:
-    image: openldes/ldi-orchetstrator:latest
+    image: openldes/ldi-orchestrator:latest
     volumes:
       - ./broker-workbench/application.yml:/ldio/application.yml:ro
     ports:

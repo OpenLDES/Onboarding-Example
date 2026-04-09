@@ -116,7 +116,7 @@ In order to convert this model to linked data we use the following [JSON-LD cont
 }
 ```
 Basically, we define a prefix for all identities which are relative URIs (`http://example.com/cars/`), we add a vocabulary (`http://schema.org/`) to prefix any property and type (e.g. `"@type": "car"`) which is not an absolute uri (e.g. `brand`). In addition, we map the identity and type predicates and we rename the `max-speed` property to `maxSpeed` and indicate it is an integer (`xsd:integer`). Applying this context to the example above, this results in (converted to [turtle](https://www.w3.org/TR/turtle/) for readability):
-```text
+```Turtle
 @prefix schema: <http://schema.org/> .
 
 <http://example.com/cars/reliant-robin>
@@ -149,7 +149,7 @@ Now that we have seeded the graph database with our car models we are ready to c
 }
 ```
 Again we add a prefix for relative identities (`@base`) and a vocabulary (`@vocab`) for relative predicates & types as well as rename several predicates. The interesting part is the `cars` array: besides renaming it (to `hasCar`) we indicate that the items in the array are URIs (`"@type": "@id"`) and we add a different prefix for these identities (`"@base": "http://example.com/cars/"`). Applying this to our example person gives (in turtle):
-```text
+```Turtle
 @prefix schema: <http://schema.org/> .
 
 <http://example.com/people/SpideyBoy>
@@ -160,7 +160,7 @@ Again we add a prefix for relative identities (`@base`) and a vocabulary (`@voca
 ```
 
 Now that we have our person as linked data, we can add the car information using a `Ldio:SparqlConstructTransformer`. We need to indicate that the triples should be added (`infer: true`) to the input model (our person) instead of replacing it. We use the following SPARQL to add the car details:
-```text
+```Turtle
 PREFIX schema: <http://schema.org/>
 CONSTRUCT {
   ?cs ?cp ?co .
@@ -203,7 +203,7 @@ curl http://localhost:9007/member?id=http%3A%2F%2Fexample.com%2Fpeople%2FSpideyB
 ```
 
 The result looks like this:
-```text
+```Turtle
 PREFIX :       <http://schema.org/>
 PREFIX cars:   <http://example.com/cars/>
 PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

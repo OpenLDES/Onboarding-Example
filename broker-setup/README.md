@@ -216,7 +216,7 @@ publisher-server:
 
 
 publisher-workbench:
-  image: openldes/ldi-orchetstrator:latest
+  image: openldes/ldi-orchestrator:latest
   environment:
   volumes:
     - ./publisher-workbench/application.yml:/ldio/application.yml:ro
@@ -270,7 +270,7 @@ broker-server:
 
 
 broker-workbench:
-  image: openldes/ldi-orchetstrator:latest
+  image: openldes/ldi-orchestrator:latest
   environment:
   volumes:
     - ./broker-workbench/application.yml:/ldio/application.yml:ro
@@ -344,7 +344,7 @@ Data Publisher a bit because in real-life you will never want to create a LDES w
 indefinitely, would you? We added a retention policy with a sliding window (of one year) on the LDES
 definition by adding a retention policy::
 
-```text
+```Turtle
 </occupancy> a ldes:EventStream ;
   ...
   ldes:eventSource [
@@ -365,7 +365,8 @@ deleted. However, we can choose to add a retention policy on the view as well to
 Adding such a retention policy is again very simple as we only need to add the following to
 a [view definition](./publisher-server/definitions/occupancy.by-page.ttl):
 
-```text
+
+```Turtle
 </occupancy/by-page> a tree:Node ; 
   tree:viewDescription [ 
     ...
@@ -400,7 +401,7 @@ showing the relevant parts, see
 the [by-time definition](./broker-server/definitions/occupancy.by-time.ttl) for the complete
 picture):
 
-```text
+```Turtle
 tree:fragmentationStrategy ([
   a tree:HierarchicalTimeBasedFragmentation ;
   tree:maxGranularity "hour" ;
@@ -431,7 +432,7 @@ a [by-location definition](./broker-server/definitions/occupancy.by-location.ttl
 retrieving a part of the data collection [by location](#around-the-world-around-the-world). The
 relevant parts are:
 
-```text
+```Turtle
 tree:fragmentationStrategy ([
   a tree:GeospatialFragmentation ;
   tree:maxZoom "14"^^xsd:integer ;
@@ -457,7 +458,7 @@ Finally, we also allow to retrieve data of a single parking lot by using its ide
 use a [reference fragmentation](#just-for-reference-i-stayed-the-same) and configure
 a [by-parking definition](./broker-server/definitions/occupancy.by-parking.ttl):
 
-```text
+```Turtle
 tree:fragmentationStrategy ([
   a tree:ReferenceFragmentation ;
   tree:fragmentationPath terms:isVersionOf ; 
@@ -570,7 +571,7 @@ To ensure members are not physically deleted too soon, we used both the longest 
 version-based one, so keeping at least 3 versions of a member and keeping all members for at least 7
 minutes:
 
-```text
+```Turtle
 ldes:eventSource [
   a ldes:EventSource ;
   ldes:retentionPolicy [

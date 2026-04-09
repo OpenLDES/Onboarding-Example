@@ -2,6 +2,5 @@
 @prefix dcterms:  <http://purl.org/dc/terms/> .
 
 [] a dcat:Dataset ;
-   dcterms:title "Real time occupancy P+R (Gent) as LDES"@en ;
-   dcterms:description "LDES containing the occupancy of the various park+rides in Ghent in real time"@en .
-   
+   dcterms:title "Real time public parking occupancy data of the city of Ghent as LDES"@en ;
+   dcterms:description "LDES containing the occupancy of the various public parkings in Ghent in real time"@en .

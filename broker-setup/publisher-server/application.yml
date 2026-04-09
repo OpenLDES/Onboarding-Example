@@ -1,6 +1,4 @@
 logging:
   level:
     root: INFO
-    be:
-      vlaanderen:
-        informatievlaanderen: DEBUG
+    org.openldes: DEBUG

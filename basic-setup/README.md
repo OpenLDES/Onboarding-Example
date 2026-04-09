@@ -11,11 +11,11 @@ an overview of all examples.
 
 ## All the Things We Need
 
-In order to publish your data set as a LDES, you will need to set up and configure a few systems. To
-start with, you need a LDES Server. It will accept, store and serve the data set. Next you will need
-a workbench which at the least creates version objects from your data set, which typically consists
-of state objects. In addition, as your data set will typically not be linked data, you will have to
-create a small pipeline in the workbench to transform your custom data model formatted in whatever
+In order to publish your data set as an LDES, you will need to set up and configure a few systems.
+To start with, you need a LDES Server. It will accept, store and serve the data set. It will also
+create version objects from your data set, which typically consists of state objects.
+In addition, as your data set will typically not be linked data, you will have to create a small
+pipeline in the workbench to transform your custom data model formatted in whatever
 format that you expose to a linked data model. The LDES server can ingest the resulting linked data
 model from several [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework)
 serializations and serve the event stream in any of
@@ -202,7 +202,7 @@ curl -X POST -H "Content-Type: application/json" "http://localhost:9004/occupanc
 ```
 
 > **Note** that we send the definitions to `http://localhost:9003/ldes` because we have defined
-`LDESSERVER_HOSTNAME: /ldes` in the Docker compose file.
+`SERVER_SERVLET_CONTEXTPATH: /ldes` in the Docker compose file.
 
 > **Note** that we send a JSON message now and therefore specify a header
 `Content-Type: application/json`.
@@ -224,8 +224,9 @@ curl "http://localhost:9003/ldes/occupancy/by-page?pageNumber=1"
 
 > **Note** that we explicitly noted the three steps to get to the data. Typically, a system that
 > wants to replicate and synchronize a LDES only needs access to the LDES itself and can discover
-> the view and subsequently the pages of that view by following the links in the LDES and view. To do
-> so, we can use a 
+> the view and subsequently the pages of that view by following the links in the LDES and view. To
+> do
+> so, we can use a
 > [LDES Client](https://openldes.github.io/Linked-Data-Interactions/core/ldi-inputs/ldes-client)
 > but that is a different tutorial.
 

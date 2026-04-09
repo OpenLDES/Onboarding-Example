@@ -22,7 +22,7 @@ rml:logicalSource [
 rr:subjectMap [
   rr:graphMap [ rr:template "{id}" ];
   rml:reference "id";
-  rr:class mv:ParkingLot
+  rr:class mv:ParkingFacility
 ];
 rr:predicateObjectMap [
   rr:predicate temp:name;
